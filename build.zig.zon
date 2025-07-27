@@ -1,5 +1,5 @@
 .{
-    .name = .myapp,
+    .name = "myapp",
     .version = "0.15.0",
     .fingerprint = 0x8798022a387365d7,
     .dependencies = .{
