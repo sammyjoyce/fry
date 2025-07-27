@@ -124,7 +124,7 @@ graph TD
     end
     
     subgraph "Build Outputs"
-        BIN[zig-out/bin/myapp<br/>Executable]
+        BIN[zig-out/bin/fry<br/>Executable]
         TESTOUT[Test Results]
         CACHE[zig-cache/<br/>Build Cache]
     end
@@ -174,7 +174,7 @@ sequenceDiagram
     participant TUI
     participant IO
     
-    User->>Main: ./myapp command args
+    User->>Main: ./fry command args
     Main->>CLI: parse_args(argc, argv)
     CLI->>Core: validate_command()
     
@@ -236,7 +236,7 @@ graph TD
 |---------|-------------|---------|
 | **Terminal UI** | ncurses | pdcurses |
 | **Secure Memory** | mlock/munlock | VirtualLock/VirtualUnlock |
-| **Config Path** | ~/.config/myapp/ | %APPDATA%\myapp\ |
+| **Config Path** | ~/.config/fry/ | %APPDATA%\fry\ |
 | **Path Separator** | / | \ |
 | **Binary Extension** | (none) | .exe |
 
@@ -299,7 +299,7 @@ graph LR
         EDIT[Edit Code]
         BUILD[zig build]
         TEST[zig build test]
-        RUN[./zig-out/bin/myapp]
+        RUN[./zig-out/bin/fry]
     end
     
     subgraph "Quality Checks"

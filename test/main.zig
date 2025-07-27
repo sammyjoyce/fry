@@ -7,7 +7,7 @@ test "application test suite" {
 
     // Ensure binary is built
     const allocator = testing.allocator;
-    const binary_path = "./zig-out/bin/myapp";
+    const binary_path = "./zig-out/bin/fry";
     const file = std.fs.cwd().openFile(binary_path, .{}) catch {
         std.debug.print("📦 Building application binary...\n", .{});
         try runBuild(allocator);
@@ -47,7 +47,7 @@ fn testHelp(allocator: std.mem.Allocator) !void {
 
     const result = try std.process.Child.run(.{
         .allocator = allocator,
-        .argv = &[_][]const u8{ "./zig-out/bin/myapp", "--help" },
+        .argv = &[_][]const u8{ "./zig-out/bin/fry", "--help" },
     });
     defer allocator.free(result.stdout);
     defer allocator.free(result.stderr);
@@ -64,7 +64,7 @@ fn testVersion(allocator: std.mem.Allocator) !void {
 
     const result = try std.process.Child.run(.{
         .allocator = allocator,
-        .argv = &[_][]const u8{ "./zig-out/bin/myapp", "--version" },
+        .argv = &[_][]const u8{ "./zig-out/bin/fry", "--version" },
     });
     defer allocator.free(result.stdout);
     defer allocator.free(result.stderr);
@@ -82,7 +82,7 @@ fn testCommands(allocator: std.mem.Allocator) !void {
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/myapp", "hello" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "hello" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
@@ -95,7 +95,7 @@ fn testCommands(allocator: std.mem.Allocator) !void {
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/myapp", "hello", "Alice" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "hello", "Alice" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
@@ -108,7 +108,7 @@ fn testCommands(allocator: std.mem.Allocator) !void {
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/myapp", "echo", "test", "message" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "echo", "test", "message" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
@@ -121,7 +121,7 @@ fn testCommands(allocator: std.mem.Allocator) !void {
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/myapp", "info" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "info" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
@@ -139,7 +139,7 @@ fn testInvalidCommand(allocator: std.mem.Allocator) !void {
 
     const result = try std.process.Child.run(.{
         .allocator = allocator,
-        .argv = &[_][]const u8{ "./zig-out/bin/myapp", "invalid" },
+        .argv = &[_][]const u8{ "./zig-out/bin/fry", "invalid" },
     });
     defer allocator.free(result.stdout);
     defer allocator.free(result.stderr);

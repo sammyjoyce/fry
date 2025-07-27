@@ -30,11 +30,11 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
-            artifact_name: myapp-linux
+            artifact_name: fry-linux
           - os: macos-latest
-            artifact_name: myapp-macos
+            artifact_name: fry-macos
           - os: windows-latest
-            artifact_name: myapp-windows
+            artifact_name: fry-windows
 
     runs-on: ${{ matrix.os }}
 
@@ -213,7 +213,7 @@ jobs:
     name: Validate Template
     runs-on: ubuntu-latest
     # Skip validation for the template repository itself
-    if: github.repository != 'sammyjoyce/c23-cli-template'
+    if: github.repository != 'sam/fry'
 
     steps:
       - name: Check out repository

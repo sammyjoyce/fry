@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const version_str = "1.0.0";
-    const app_name = "myapp";
+    const app_name = "fry";
     const binary_name = app_name;
 
     // Attempt to inject current git commit hash, fall back to "unknown"

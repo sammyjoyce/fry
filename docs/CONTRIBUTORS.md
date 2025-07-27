@@ -2,7 +2,7 @@
 
 ## Maintainers
 
-- Sam Joyce (@sammyjoyce) - Creator and maintainer
+- Sam Joyce (@sam) - Creator and maintainer
 
 ## Contributors
 
