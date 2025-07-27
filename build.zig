@@ -49,13 +49,22 @@ pub fn build(b: *std.Build) void {
         "src/main.c",
         "src/core/error.c",
         "src/core/config.c",
+        "src/core/oauth.c",
+        "src/core/keychain.c",
+        "src/core/session.c",
         "src/utils/logging.c",
         "src/utils/memory.c",
         "src/utils/colors.c",
+        "src/utils/json.c",
+        "src/utils/http.c",
         "src/io/input.c",
         "src/io/output.c",
         "src/cli/help.c",
         "src/cli/args.c",
+        "src/cli/commands.c",
+        "src/cli/cmd_accounts.c",
+        "src/cli/cmd_auth.c",
+        "src/cli/cmd_stubs.c",
     };
 
     // Base flags
@@ -86,6 +95,43 @@ pub fn build(b: *std.Build) void {
         flags.deinit();
     }
 
+    // Add platform-specific sources
+    if (target.result.os.tag == .macos) {
+        var flags = std.ArrayList([]const u8).init(b.allocator);
+        flags.appendSlice(&base_flags) catch @panic("OOM");
+        flags.append(b.fmt("-DAPP_VERSION=\"{s}\"", .{version_str})) catch @panic("OOM");
+        flags.append(b.fmt("-DAPP_NAME=\"{s}\"", .{app_name})) catch @panic("OOM");
+        flags.append(b.fmt("-DAPP_GIT_COMMIT=\"{s}\"", .{git_commit})) catch @panic("OOM");
+        flags.append("-DAPP_BUILD_DATE=\"reproducible\"") catch @panic("OOM");
+
+        exe.addCSourceFile(.{
+            .file = b.path("src/core/keychain_macos.c"),
+            .flags = flags.items,
+        });
+        flags.deinit();
+
+        // Link macOS frameworks
+        exe.linkFramework("Security");
+        exe.linkFramework("CoreFoundation");
+    } else if (target.result.os.tag == .linux) {
+        var flags = std.ArrayList([]const u8).init(b.allocator);
+        flags.appendSlice(&base_flags) catch @panic("OOM");
+        flags.append(b.fmt("-DAPP_VERSION=\"{s}\"", .{version_str})) catch @panic("OOM");
+        flags.append(b.fmt("-DAPP_NAME=\"{s}\"", .{app_name})) catch @panic("OOM");
+        flags.append(b.fmt("-DAPP_GIT_COMMIT=\"{s}\"", .{git_commit})) catch @panic("OOM");
+        flags.append("-DAPP_BUILD_DATE=\"reproducible\"") catch @panic("OOM");
+
+        exe.addCSourceFile(.{
+            .file = b.path("src/core/keychain_linux.c"),
+            .flags = flags.items,
+        });
+        flags.deinit();
+
+        // Link libsecret for keyring access
+        exe.linkSystemLibrary("libsecret-1");
+        exe.linkSystemLibrary("glib-2.0");
+    }
+
     // Add TUI source if enabled
     if (enable_tui) {
         var flags = std.ArrayList([]const u8).init(b.allocator);
@@ -100,6 +146,13 @@ pub fn build(b: *std.Build) void {
         const tui_sources = [_][]const u8{
             "src/tui/tui.c",
             "src/tui/tui_progress.c",
+            "src/tui/tui_ncurses.c",
+            "src/tui/tui_pane.c",
+            "src/tui/tui_layout.c",
+            "src/tui/tui_pty.c",
+            "src/tui/tui_mux.c",
+            "src/tui/tui_input.c",
+            "src/tui/tui_render.c",
         };
 
         for (tui_sources) |src| {
@@ -113,6 +166,12 @@ pub fn build(b: *std.Build) void {
 
     exe.linkLibC();
 
+    // Link OpenSSL for encryption
+    exe.linkSystemLibrary("crypto");
+    exe.linkSystemLibrary("ssl");
+
+    // Link libcurl for HTTP requests
+    exe.linkSystemLibrary("curl");
     // NCurses / PDCurses configuration (only if TUI is enabled)
     if (enable_tui) {
         // Allow caller to override ncurses install prefix explicitly.
@@ -190,4 +249,56 @@ pub fn build(b: *std.Build) void {
     const check_step = b.step("check", "Run all checks");
     check_step.dependOn(fmt_check_step);
     check_step.dependOn(test_step);
+
+    // Code signing for macOS (ad-hoc signing to enable keychain access)
+    if (target.result.os.tag == .macos) {
+        const sign_step = b.step("sign", "Code sign the macOS binary (ad-hoc)");
+
+        // Get the output path
+        const exe_path = b.getInstallPath(.bin, binary_name);
+
+        // Add codesign command
+        const sign_cmd = b.addSystemCommand(&.{
+            "codesign",
+            "--force", // Replace any existing signature
+            "--sign", "-", // Ad-hoc signing (no certificate)
+            "--timestamp=none", // No timestamp for ad-hoc
+            exe_path,
+        });
+
+        // Make signing depend on installation
+        sign_cmd.step.dependOn(b.getInstallStep());
+        sign_step.dependOn(&sign_cmd.step);
+
+        // Also create a sign-identity step for proper signing with a developer certificate
+        const sign_identity = b.option([]const u8, "sign-identity", "Code signing identity (e.g., 'Developer ID Application: Your Name')");
+
+        if (sign_identity) |identity| {
+            const sign_cert_step = b.step("sign-cert", "Code sign with developer certificate");
+
+            const sign_cert_cmd = b.addSystemCommand(&.{
+                "codesign",
+                "--force",
+                "--sign",
+                identity,
+                "--timestamp", // Include secure timestamp
+                "--options",
+                "runtime",
+                exe_path,
+            });
+
+            sign_cert_cmd.step.dependOn(b.getInstallStep());
+            sign_cert_step.dependOn(&sign_cert_cmd.step);
+
+            // Verify the signature
+            const verify_cmd = b.addSystemCommand(&.{
+                "codesign",
+                "--verify",
+                "--verbose",
+                exe_path,
+            });
+            verify_cmd.step.dependOn(&sign_cert_cmd.step);
+            sign_cert_step.dependOn(&verify_cmd.step);
+        }
+    }
 }

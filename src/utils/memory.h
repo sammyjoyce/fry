@@ -42,3 +42,11 @@ void app_secure_free(void *ptr, size_t size);
 // Use instead of strdup() for any passwords or user secrets
 // to maintain security throughout the string's lifecycle.
 APP_NODISCARD char *app_secure_strdup(const char *s);
+
+// Standard memory wrappers with error handling
+void *app_malloc(size_t size);
+void *app_calloc(size_t nmemb, size_t size);
+void *app_realloc(void *ptr, size_t size);
+void app_free(void *ptr);
+char *app_strdup(const char *str);
+char *app_strndup(const char *str, size_t n);

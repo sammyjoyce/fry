@@ -17,18 +17,16 @@ void app_print_concise_help(const char *program_name) {
     program_name = APP_NAME;
   }
 
-  printf("%s - A modern CLI application [version %s]\n\n", APP_NAME,
+  printf("%s - Claude Code OAuth account manager [version %s]\n\n", APP_NAME,
          APP_VERSION);
 
-  printf("Usage: %s [options] <command> [arguments]\n\n", program_name);
+  printf("Usage: %s [options] <noun> <verb> [arguments]\n\n", program_name);
 
-  printf("Commands:\n");
-  printf("  hello [name]    Print a greeting message\n");
-  printf("  echo [text...]  Echo the provided text\n");
-  printf("  info            Display application information\n");
-#ifdef ENABLE_TUI
-  printf("  menu            Launch interactive TUI menu\n");
-#endif
+  printf("Common commands:\n");
+  printf("  accounts list    List all stored accounts\n");
+  printf("  accounts add     Add new account\n");
+  printf("  sessions start   Start new Claude session\n");
+  printf("  mux up           Launch multiplexer\n");
   printf("\n");
 
   printf("Options:\n");
@@ -71,22 +69,38 @@ void app_print_verbose_usage(const char *program_name) {
   printf("  tools with proper error handling, configuration, and testing.\n\n");
 
   printf("%sCOMMANDS%s\n", bold, reset);
-  printf("  hello [name]       Print a greeting message\n");
-  printf("                     If no name is provided, greets 'World'\n\n");
-
-  printf("  echo [text...]     Echo the provided text\n");
-  printf("                     Prints all arguments separated by spaces\n\n");
-
-  printf("  info               Display application information\n");
+  printf("  %sAccount Management:%s\n", bold, reset);
+  printf("    accounts list      List all stored accounts\n");
   printf(
-      "                     Shows version, build date, and configuration\n\n");
+      "    accounts add       Add new account (--name NAME [--file FILE])\n");
+  printf("    accounts use       Set default account\n");
+  printf("    accounts rm        Remove account\n");
+  printf("    accounts disable   Temporarily disable account\n");
+  printf("    accounts enable    Re-enable account\n\n");
 
-#ifdef ENABLE_TUI
-  printf("  menu               Launch interactive TUI menu\n");
-  printf(
-      "                     Opens an ncurses-based terminal UI with various "
-      "options\n\n");
-#endif
+  printf("  %sSession Management:%s\n", bold, reset);
+  printf("    sessions list      Show running and saved sessions\n");
+  printf("    sessions start     Start new session\n");
+  printf("    sessions attach    Attach to running session\n");
+  printf("    sessions save      Save session to disk\n");
+  printf("    sessions restore   Restore saved session\n\n");
+
+  printf("  %sMultiplexer:%s\n", bold, reset);
+  printf("    mux up             Launch multiplexer\n");
+  printf("    mux ls             List active multiplexers\n");
+  printf("    mux attach         Attach to multiplexer\n");
+  printf("    mux down           Close multiplexer\n\n");
+
+  printf("  %sConfiguration:%s\n", bold, reset);
+  printf("    config show        Display configuration\n");
+  printf("    config set         Update a setting\n");
+  printf("    config edit        Open config in editor\n");
+  printf("    config reset       Reset to defaults\n\n");
+
+  printf("  %sToken Management:%s\n", bold, reset);
+  printf("    tokens inspect     Decode and display token info\n");
+  printf("    tokens refresh     Force token refresh\n");
+  printf("    tokens expire      Mark token as expired\n\n");
 
   printf("%sOPTIONS%s\n", bold, reset);
   printf("  -h, --help         Show this help message and exit\n");
@@ -161,6 +175,5 @@ void app_print_verbose_usage(const char *program_name) {
 
   printf("%sSEE ALSO%s\n", bold, reset);
   printf("  Project homepage: https://github.com/sam/yourproject\n");
-  printf(
-      "  Documentation: https://github.com/sam/yourproject#readme\n");
+  printf("  Documentation: https://github.com/sam/yourproject#readme\n");
 }

@@ -66,6 +66,64 @@ const char *app_strerror(app_error error_code) {
   case APP_ERROR_OUT_OF_RANGE:
     return "Value out of range";
 
+  // OAuth/Authentication errors
+  case APP_ERROR_INVALID_TOKEN:
+    return "Invalid token format or content";
+  case APP_ERROR_TOKEN_EXPIRED:
+    return "Token has expired";
+  case APP_ERROR_CRYPTO:
+    return "Cryptographic operation failed";
+  case APP_ERROR_INVALID_PARAM:
+    return "Invalid parameter";
+  case APP_ERROR_ENV:
+    return "Environment variable error";
+
+  // Command errors
+  case APP_ERROR_UNKNOWN_COMMAND:
+    return "Unknown command";
+  case APP_ERROR_NOT_IMPLEMENTED:
+    return "Feature not yet implemented";
+
+  // JSON errors
+  case APP_ERROR_PARSE:
+    return "JSON parse error";
+
+  // Keychain errors
+  case APP_ERROR_KEYCHAIN_NOT_FOUND:
+    return "Token not found in keychain";
+  case APP_ERROR_KEYCHAIN_ACCESS_DENIED:
+    return "Access denied to keychain";
+  case APP_ERROR_KEYCHAIN_LOCKED:
+    return "Keychain is locked";
+  case APP_ERROR_KEYCHAIN_PLATFORM:
+    return "Platform-specific keychain error";
+  case APP_ERROR_KEYCHAIN_UNSUPPORTED:
+    return "Keychain operation not supported on this platform";
+  case APP_ERROR_KEYCHAIN_CORRUPTED:
+    return "Token data in keychain is corrupted";
+  case APP_ERROR_KEYCHAIN_STORAGE_FULL:
+    return "Keychain storage is full";
+  case APP_ERROR_KEYCHAIN:
+    return "Keychain error";
+
+  // Additional errors
+  case APP_ERROR_NOT_INITIALIZED:
+    return "Not initialized";
+  case APP_ERROR_NOT_AUTHENTICATED:
+    return "Not authenticated";
+  case APP_ERROR_CANCELLED:
+    return "Operation cancelled";
+  case APP_ERROR_INVALID_OPERATION:
+    return "Invalid operation";
+  case APP_ERROR_SESSION_INACTIVE:
+    return "Session is not active";
+  case APP_ERROR_PARTIAL:
+    return "Operation partially completed";
+  case APP_ERROR_RATE_LIMITED:
+    return "Rate limited";
+  case APP_ERROR_API:
+    return "API error";
+
   default:
     return "Unknown error";
   }

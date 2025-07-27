@@ -78,57 +78,30 @@ fn testVersion(allocator: std.mem.Allocator) !void {
 fn testCommands(allocator: std.mem.Allocator) !void {
     std.debug.print("Testing built-in commands...\n", .{});
 
-    // Test hello command
+    // Test accounts list command
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/fry", "hello" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "accounts", "list" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
 
+        // This command should succeed even with no accounts
         try testing.expect(result.term.Exited == 0);
-        try testing.expect(std.mem.indexOf(u8, result.stdout, "Hello, World!") != null);
     }
 
-    // Test hello with name
+    // Test config show command
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/fry", "hello", "Alice" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "config", "show" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
 
         try testing.expect(result.term.Exited == 0);
-        try testing.expect(std.mem.indexOf(u8, result.stdout, "Hello, Alice!") != null);
-    }
-
-    // Test echo command
-    {
-        const result = try std.process.Child.run(.{
-            .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/fry", "echo", "test", "message" },
-        });
-        defer allocator.free(result.stdout);
-        defer allocator.free(result.stderr);
-
-        try testing.expect(result.term.Exited == 0);
-        try testing.expect(std.mem.indexOf(u8, result.stdout, "test message") != null);
-    }
-
-    // Test info command
-    {
-        const result = try std.process.Child.run(.{
-            .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/fry", "info" },
-        });
-        defer allocator.free(result.stdout);
-        defer allocator.free(result.stderr);
-
-        try testing.expect(result.term.Exited == 0);
-        try testing.expect(std.mem.indexOf(u8, result.stdout, "Application:") != null);
-        try testing.expect(std.mem.indexOf(u8, result.stdout, "Version:") != null);
+        try testing.expect(std.mem.indexOf(u8, result.stdout, "Configuration:") != null);
     }
 
     std.debug.print("✓ All commands work correctly\n", .{});
@@ -145,7 +118,8 @@ fn testInvalidCommand(allocator: std.mem.Allocator) !void {
     defer allocator.free(result.stderr);
 
     try testing.expect(result.term.Exited != 0);
-    try testing.expect(std.mem.indexOf(u8, result.stderr, "Unknown command") != null);
 
+    // Check stderr for the error message (error output goes to stderr)
+    try testing.expect(std.mem.indexOf(u8, result.stderr, "Error: Missing verb for noun") != null);
     std.debug.print("✓ Invalid command handling works correctly\n", .{});
 }

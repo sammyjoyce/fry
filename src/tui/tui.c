@@ -10,8 +10,11 @@
 
 #include "../utils/logging.h"
 #include "../utils/memory.h"
+#include "tui_ncurses.h"
 
 static bool tui_initialized = false;
+static app_terminal_caps_t terminal_caps;
+static app_fallback_mode_t fallback_mode = FALLBACK_MODE_NONE;
 
 app_error tui_init(void) {
   if (tui_initialized) {
@@ -21,31 +24,58 @@ app_error tui_init(void) {
   // Set locale for proper Unicode support
   setlocale(LC_ALL, "");
 
+  // Initialize NCurses abstraction
+  app_error err = app_ncurses_init(true);  // Use real NCurses
+  if (err != APP_SUCCESS) {
+    LOG_ERROR("Failed to initialize NCurses abstraction");
+    return err;
+  }
+
   // Initialize ncurses
-  if (initscr() == NULL) {
+  if (g_ncurses->initscr() == NULL) {
     LOG_ERROR("Failed to initialize ncurses");
+    app_ncurses_cleanup();
     return APP_ERROR_INTERNAL;
   }
 
+  // Detect terminal capabilities
+  err = app_ncurses_detect_capabilities(&terminal_caps);
+  if (err != APP_SUCCESS) {
+    LOG_WARNING("Failed to detect terminal capabilities, using defaults");
+  }
+
+  // Determine fallback mode
+  err = app_ncurses_get_fallback_mode(&terminal_caps, &fallback_mode);
+  if (err != APP_SUCCESS) {
+    LOG_WARNING("Failed to determine fallback mode, using full features");
+    fallback_mode = FALLBACK_MODE_NONE;
+  }
+
   // Configure ncurses
-  cbreak();              // Disable line buffering
-  noecho();              // Don't echo input
-  keypad(stdscr, TRUE);  // Enable special keys
-  curs_set(0);           // Hide cursor by default
+  g_ncurses->cbreak();              // Disable line buffering
+  g_ncurses->noecho();              // Don't echo input
+  g_ncurses->keypad(stdscr, TRUE);  // Enable special keys
+  g_ncurses->curs_set(0);           // Hide cursor by default
 
   // Initialize colors if supported
-  if (has_colors()) {
-    start_color();
-    use_default_colors();  // Use terminal's default colors
-    tui_init_colors();
+  if (terminal_caps.has_colors && fallback_mode != FALLBACK_MODE_MONOCHROME) {
+    g_ncurses->start_color();
+    g_ncurses->use_default_colors();  // Use terminal's default colors
+    app_error color_err = tui_init_colors();
+    if (color_err != APP_SUCCESS) {
+      LOG_WARNING("Failed to initialize colors: %s",
+                  app_error_string(color_err));
+    }
   }
 
   // Clear and refresh
-  clear();
-  refresh();
+  g_ncurses->clear();
+  g_ncurses->refresh();
 
   tui_initialized = true;
-  LOG_DEBUG("TUI initialized successfully");
+  LOG_DEBUG("TUI initialized successfully (mode=%d, colors=%d, size=%dx%d)",
+            fallback_mode, terminal_caps.has_colors,
+            terminal_caps.terminal_width, terminal_caps.terminal_height);
   return APP_SUCCESS;
 }
 
@@ -55,9 +85,12 @@ void tui_cleanup(void) {
   }
 
   // Reset terminal
-  clear();
-  refresh();
-  endwin();
+  g_ncurses->clear();
+  g_ncurses->refresh();
+  g_ncurses->endwin();
+
+  // Cleanup NCurses abstraction
+  app_ncurses_cleanup();
 
   tui_initialized = false;
   LOG_DEBUG("TUI cleaned up");
@@ -68,29 +101,29 @@ bool tui_is_initialized(void) {
 }
 
 app_error tui_init_colors(void) {
-  if (!has_colors()) {
+  if (!g_ncurses->has_colors()) {
     LOG_WARNING("Terminal does not support colors");
     return APP_SUCCESS;  // Not an error, just no colors
   }
 
   // Define color pairs
-  init_pair(TUI_COLOR_DEFAULT, -1, -1);
-  init_pair(TUI_COLOR_HIGHLIGHT, COLOR_BLACK, COLOR_WHITE);
-  init_pair(TUI_COLOR_ERROR, COLOR_RED, -1);
-  init_pair(TUI_COLOR_SUCCESS, COLOR_GREEN, -1);
-  init_pair(TUI_COLOR_WARNING, COLOR_YELLOW, -1);
-  init_pair(TUI_COLOR_INFO, COLOR_CYAN, -1);
-  init_pair(TUI_COLOR_MENU_SELECTED, COLOR_BLACK, COLOR_CYAN);
-  init_pair(TUI_COLOR_MENU_NORMAL, -1, -1);
-  init_pair(TUI_COLOR_BORDER, COLOR_BLUE, -1);
-  init_pair(TUI_COLOR_TITLE, COLOR_MAGENTA, -1);
+  g_ncurses->init_pair(TUI_COLOR_DEFAULT, -1, -1);
+  g_ncurses->init_pair(TUI_COLOR_HIGHLIGHT, COLOR_BLACK, COLOR_WHITE);
+  g_ncurses->init_pair(TUI_COLOR_ERROR, COLOR_RED, -1);
+  g_ncurses->init_pair(TUI_COLOR_SUCCESS, COLOR_GREEN, -1);
+  g_ncurses->init_pair(TUI_COLOR_WARNING, COLOR_YELLOW, -1);
+  g_ncurses->init_pair(TUI_COLOR_INFO, COLOR_CYAN, -1);
+  g_ncurses->init_pair(TUI_COLOR_MENU_SELECTED, COLOR_BLACK, COLOR_CYAN);
+  g_ncurses->init_pair(TUI_COLOR_MENU_NORMAL, -1, -1);
+  g_ncurses->init_pair(TUI_COLOR_BORDER, COLOR_BLUE, -1);
+  g_ncurses->init_pair(TUI_COLOR_TITLE, COLOR_MAGENTA, -1);
 
   return APP_SUCCESS;
 }
 
 void tui_set_color(WINDOW *win, tui_color_pair_t color) {
-  if (has_colors() && color < TUI_COLOR_MAX) {
-    wattron(win, COLOR_PAIR(color));
+  if (g_ncurses->has_colors() && color < TUI_COLOR_MAX) {
+    NC_WATTRON(win, COLOR_PAIR(color));
   }
 }
 
@@ -107,13 +140,13 @@ tui_window_t *tui_create_window(int height, int width, int y, int x) {
   window->has_border = false;
   window->title = NULL;
 
-  window->win = newwin(height, width, y, x);
+  window->win = g_ncurses->newwin(height, width, y, x);
   if (!window->win) {
     app_secure_free(window, sizeof(tui_window_t));
     return NULL;
   }
 
-  keypad(window->win, TRUE);  // Enable special keys for this window
+  g_ncurses->keypad(window->win, TRUE);  // Enable special keys for this window
   return window;
 }
 
@@ -123,7 +156,7 @@ void tui_destroy_window(tui_window_t *window) {
   }
 
   if (window->win) {
-    delwin(window->win);
+    g_ncurses->delwin(window->win);
   }
 
   if (window->title) {
@@ -139,8 +172,8 @@ void tui_draw_border(tui_window_t *window) {
   }
 
   tui_set_color(window->win, TUI_COLOR_BORDER);
-  box(window->win, 0, 0);
-  wattroff(window->win, COLOR_PAIR(TUI_COLOR_BORDER));
+  NC_BOX(window->win, 0, 0);
+  NC_WATTROFF(window->win, COLOR_PAIR(TUI_COLOR_BORDER));
   window->has_border = true;
 
   // Draw title if set
@@ -169,20 +202,20 @@ void tui_set_window_title(tui_window_t *window, const char *title) {
 
     const int x_pos = (window->width - display_len) / 2;
     tui_set_color(window->win, TUI_COLOR_TITLE);
-    mvwprintw(window->win, 0, x_pos, " %.*s ", max_width, title);
-    wattroff(window->win, COLOR_PAIR(TUI_COLOR_TITLE));
+    g_ncurses->mvwprintw(window->win, 0, x_pos, " %.*s ", max_width, title);
+    NC_WATTROFF(window->win, COLOR_PAIR(TUI_COLOR_TITLE));
   }
 }
 
 void tui_refresh_window(tui_window_t *window) {
   if (window && window->win) {
-    wrefresh(window->win);
+    g_ncurses->wrefresh(window->win);
   }
 }
 
 void tui_clear_window(tui_window_t *window) {
   if (window && window->win) {
-    wclear(window->win);
+    g_ncurses->wclear(window->win);
     if (window->has_border) {
       tui_draw_border(window);
     }
@@ -194,13 +227,13 @@ void tui_print_centered(WINDOW *win, int y, const char *text) {
     return;
   }
 
-  int max_x = getmaxx(win);
+  int max_x = g_ncurses->getmaxx(win);
   int len = strlen(text);
   int x = (max_x - len) / 2;
   if (x < 0)
     x = 0;
 
-  mvwprintw(win, y, x, "%.*s", max_x, text);
+  g_ncurses->mvwprintw(win, y, x, "%.*s", max_x, text);
 }
 
 void tui_print_wrapped(WINDOW *win, int y, int x, int width, const char *text) {
@@ -228,7 +261,7 @@ void tui_print_wrapped(WINDOW *win, int y, int x, int width, const char *text) {
     }
 
     // Print word
-    mvwaddnstr(win, current_y, current_x, word_start, word_len);
+    NC_MVWADDNSTR(win, current_y, current_x, word_start, word_len);
     current_x += word_len;
 
     // Handle space or newline
@@ -246,7 +279,7 @@ void tui_print_wrapped(WINDOW *win, int y, int x, int width, const char *text) {
 }
 
 int tui_get_char(void) {
-  return getch();
+  return g_ncurses->getch();
 }
 
 app_error tui_get_string(WINDOW *win, char *buffer, size_t size,
@@ -265,7 +298,7 @@ app_error tui_get_string(WINDOW *win, char *buffer, size_t size,
   echo();
 
   // Get string
-  int result = wgetnstr(win, buffer, size - 1);
+  int result = g_ncurses->wgetnstr(win, buffer, size - 1);
 
   // Restore settings
   noecho();
@@ -305,7 +338,7 @@ int tui_show_menu(tui_window_t *window, const char *title,
     if (title) {
       tui_set_color(window->win, TUI_COLOR_TITLE);
       tui_print_centered(window->win, 1, title);
-      wattroff(window->win, COLOR_PAIR(TUI_COLOR_TITLE));
+      NC_WATTROFF(window->win, COLOR_PAIR(TUI_COLOR_TITLE));
     }
 
     // Draw menu items
@@ -315,29 +348,31 @@ int tui_show_menu(tui_window_t *window, const char *title,
 
       if (!items[i].enabled) {
         // Disabled item
-        mvwprintw(window->win, y, 4, "  %s (disabled)", items[i].label);
+        g_ncurses->mvwprintw(window->win, y, 4, "  %s (disabled)",
+                             items[i].label);
       } else if (i == selected) {
         // Selected item
         tui_set_color(window->win, TUI_COLOR_MENU_SELECTED);
-        mvwprintw(window->win, y, 2, "> %s", items[i].label);
-        wattroff(window->win, COLOR_PAIR(TUI_COLOR_MENU_SELECTED));
+        g_ncurses->mvwprintw(window->win, y, 2, "> %s", items[i].label);
+        NC_WATTROFF(window->win, COLOR_PAIR(TUI_COLOR_MENU_SELECTED));
 
         // Show description if available
         if (items[i].description) {
-          mvwprintw(window->win, y + 1, 6, "%s", items[i].description);
+          g_ncurses->mvwprintw(window->win, y + 1, 6, "%s",
+                               items[i].description);
         }
       } else {
         // Normal item
-        mvwprintw(window->win, y, 4, "%s", items[i].label);
+        g_ncurses->mvwprintw(window->win, y, 4, "%s", items[i].label);
       }
     }
 
     // Instructions
     int bottom_y = window->height - 2;
     tui_set_color(window->win, TUI_COLOR_INFO);
-    mvwprintw(window->win, bottom_y, 2,
-              "Use ↑/↓ to navigate, Enter to select, q to cancel");
-    wattroff(window->win, COLOR_PAIR(TUI_COLOR_INFO));
+    g_ncurses->mvwprintw(window->win, bottom_y, 2,
+                         "Use ↑/↓ to navigate, Enter to select, q to cancel");
+    NC_WATTROFF(window->win, COLOR_PAIR(TUI_COLOR_INFO));
 
     tui_refresh_window(window);
 
@@ -378,8 +413,8 @@ void tui_show_message(const char *title, const char *message) {
     return;
   }
 
-  int max_y = getmaxy(stdscr);
-  int max_x = getmaxx(stdscr);
+  int max_y = g_ncurses->getmaxy(stdscr);
+  int max_x = g_ncurses->getmaxx(stdscr);
 
   int width = 60;
   int height = 10;
@@ -409,14 +444,14 @@ void tui_show_message(const char *title, const char *message) {
   // Instructions
   tui_set_color(window->win, TUI_COLOR_INFO);
   tui_print_centered(window->win, height - 2, "Press any key to continue");
-  wattroff(window->win, COLOR_PAIR(TUI_COLOR_INFO));
+  NC_WATTROFF(window->win, COLOR_PAIR(TUI_COLOR_INFO));
 
   tui_refresh_window(window);
   tui_get_char();
 
   tui_destroy_window(window);
-  touchwin(stdscr);
-  refresh();
+  NC_TOUCHWIN(stdscr);
+  g_ncurses->refresh();
 }
 
 bool tui_confirm(const char *title, const char *question) {
@@ -424,8 +459,8 @@ bool tui_confirm(const char *title, const char *question) {
     return false;
   }
 
-  int max_y = getmaxy(stdscr);
-  int max_x = getmaxx(stdscr);
+  int max_y = g_ncurses->getmaxy(stdscr);
+  int max_x = g_ncurses->getmaxx(stdscr);
 
   int width = 50;
   int height = 8;
@@ -453,7 +488,7 @@ bool tui_confirm(const char *title, const char *question) {
   // Instructions
   tui_set_color(window->win, TUI_COLOR_INFO);
   tui_print_centered(window->win, height - 2, "y/n");
-  wattroff(window->win, COLOR_PAIR(TUI_COLOR_INFO));
+  NC_WATTROFF(window->win, COLOR_PAIR(TUI_COLOR_INFO));
 
   tui_refresh_window(window);
 
@@ -470,8 +505,8 @@ bool tui_confirm(const char *title, const char *question) {
   }
 
   tui_destroy_window(window);
-  touchwin(stdscr);
-  refresh();
+  NC_TOUCHWIN(stdscr);
+  g_ncurses->refresh();
   return result;
 }
 
@@ -481,8 +516,8 @@ app_error tui_input_dialog(const char *title, const char *prompt, char *buffer,
     return APP_ERROR_INVALID_ARG;
   }
 
-  int max_y = getmaxy(stdscr);
-  int max_x = getmaxx(stdscr);
+  int max_y = g_ncurses->getmaxy(stdscr);
+  int max_x = g_ncurses->getmaxx(stdscr);
 
   int width = 60;
   int height = 8;
@@ -504,33 +539,33 @@ app_error tui_input_dialog(const char *title, const char *prompt, char *buffer,
 
   // Print prompt
   if (prompt) {
-    mvwprintw(window->win, 2, 2, "%s", prompt);
+    g_ncurses->mvwprintw(window->win, 2, 2, "%s", prompt);
   }
 
   // Input field
-  mvwprintw(window->win, 4, 2, "> ");
+  g_ncurses->mvwprintw(window->win, 4, 2, "> ");
   tui_refresh_window(window);
 
   app_error result = tui_get_string(window->win, buffer, size, NULL);
 
   tui_destroy_window(window);
-  touchwin(stdscr);
-  refresh();
+  NC_TOUCHWIN(stdscr);
+  g_ncurses->refresh();
   return result;
 }
 
-void tui_beep(void) {
-  beep();
+void tui_g_ncurses->beep(void) {
+  g_ncurses->beep();
 }
 
-void tui_flash(void) {
-  flash();
+void tui_g_ncurses->flash(void) {
+  g_ncurses->flash();
 }
 
 int tui_get_max_x(void) {
-  return getmaxx(stdscr);
+  return g_ncurses->getmaxx(stdscr);
 }
 
 int tui_get_max_y(void) {
-  return getmaxy(stdscr);
+  return g_ncurses->getmaxy(stdscr);
 }

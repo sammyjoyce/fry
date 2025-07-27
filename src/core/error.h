@@ -55,9 +55,46 @@ typedef enum {
   // Feature-specific errors (30+): Reserved for application-specific features
   // that may be added by users of this template.
   APP_ERROR_FEATURE_BASE = 30,
+
+  // OAuth/Authentication errors (30-39)
+  APP_ERROR_INVALID_TOKEN = 30,
+  APP_ERROR_TOKEN_EXPIRED = 31,
+  APP_ERROR_CRYPTO = 32,
+  APP_ERROR_INVALID_PARAM = 33,
+  APP_ERROR_ENV = 34,
+
+  // Command errors (40-49)
+  APP_ERROR_UNKNOWN_COMMAND = 40,
+  APP_ERROR_NOT_IMPLEMENTED = 41,
+
+  // JSON errors (50-59)
+  APP_ERROR_PARSE = 50,
+
+  // Keychain errors (60-69)
+  APP_ERROR_KEYCHAIN_NOT_FOUND = 60,
+  APP_ERROR_KEYCHAIN_ACCESS_DENIED = 61,
+  APP_ERROR_KEYCHAIN_LOCKED = 62,
+  APP_ERROR_KEYCHAIN_PLATFORM = 63,
+  APP_ERROR_KEYCHAIN_UNSUPPORTED = 64,
+  APP_ERROR_KEYCHAIN_CORRUPTED = 65,
+  APP_ERROR_KEYCHAIN_STORAGE_FULL = 66,
+  APP_ERROR_KEYCHAIN = 67,
+
+  // Additional errors (70-79)
+  APP_ERROR_NOT_INITIALIZED = 70,
+  APP_ERROR_NOT_AUTHENTICATED = 71,
+  APP_ERROR_CANCELLED = 72,
+  APP_ERROR_INVALID_OPERATION = 73,
+  APP_ERROR_SESSION_INACTIVE = 74,
+  APP_ERROR_PARTIAL = 75,
+  APP_ERROR_RATE_LIMITED = 76,
+  APP_ERROR_API = 77,
 } app_error;
 
 // Get human-readable error description for user-facing messages.
 // This function ensures users receive meaningful feedback instead of cryptic
 // error codes, improving the debugging experience and reducing support burden.
 APP_NODISCARD const char *app_strerror(app_error error_code);
+
+// Alias for consistency with OAuth module
+#define app_error_string(err) app_strerror(err)
