@@ -89,7 +89,7 @@ docs(readme): update installation instructions
 2. **Clone your fork**:
 
    ```bash
-   git clone https://github.com/yourusername/yourproject.git
+   git clone https://github.com/sam/yourproject.git
    cd yourproject
    ```
 
@@ -275,7 +275,7 @@ app_error process_input(const char* input, size_t len) {
 ## Project Structure
 
 ```
-cli-starter/
+fry/
 ├── src/              # Core implementation
 │   ├── main.c       # Entry point
 │   ├── core/        # Core functionality

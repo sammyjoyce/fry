@@ -17,39 +17,39 @@ This guide demonstrates advanced usage patterns for the CLI application, includi
 
 ```bash
 # Process input from a file
-myapp process < input.txt
+fry process < input.txt
 
 # Process multiple files
-cat file1.txt file2.txt | myapp process
+cat file1.txt file2.txt | fry process
 
 # Process with specific encoding
-iconv -f ISO-8859-1 -t UTF-8 input.txt | myapp process
+iconv -f ISO-8859-1 -t UTF-8 input.txt | fry process
 ```
 
 ### Writing to Files
 
 ```bash
 # Save output to a file
-myapp generate --format json > output.json
+fry generate --format json > output.json
 
 # Append to existing file
-myapp status >> log.txt
+fry status >> log.txt
 
 # Split output streams
-myapp analyze 2>errors.log 1>results.txt
+fry analyze 2>errors.log 1>results.txt
 ```
 
 ### Silent Operation
 
 ```bash
 # Suppress all output
-myapp batch-process > /dev/null 2>&1
+fry batch-process > /dev/null 2>&1
 
 # Show only errors
-myapp validate 1>/dev/null
+fry validate 1>/dev/null
 
 # Show only progress (if using stderr for progress)
-myapp convert large-file.dat 2>&1 1>/dev/null | grep -E "^\[.*%\]"
+fry convert large-file.dat 2>&1 1>/dev/null | grep -E "^\[.*%\]"
 ```
 
 ## Piping and Chaining
@@ -58,26 +58,26 @@ myapp convert large-file.dat 2>&1 1>/dev/null | grep -E "^\[.*%\]"
 
 ```bash
 # Filter and process
-grep "ERROR" log.txt | myapp analyze --type error
+grep "ERROR" log.txt | fry analyze --type error
 
 # Chain multiple operations
-myapp list --format json | jq '.items[]' | myapp process --batch
+fry list --format json | jq '.items[]' | fry process --batch
 
 # Count results
-myapp search "pattern" | wc -l
+fry search "pattern" | wc -l
 ```
 
 ### Advanced Piping
 
 ```bash
 # Parallel processing with xargs
-find . -name "*.dat" | xargs -P 4 -I {} myapp process {}
+find . -name "*.dat" | xargs -P 4 -I {} fry process {}
 
 # Process in batches
-ls *.csv | xargs -n 10 myapp import --batch
+ls *.csv | xargs -n 10 fry import --batch
 
 # Stream processing
-tail -f app.log | myapp monitor --real-time
+tail -f app.log | fry monitor --real-time
 ```
 
 ### Complex Pipelines
@@ -85,19 +85,19 @@ tail -f app.log | myapp monitor --real-time
 ```bash
 # Multi-stage processing pipeline
 cat raw-data.txt \
-  | myapp parse --format csv \
+  | fry parse --format csv \
   | awk '{print $2,$4}' \
-  | myapp analyze --columns 2 \
+  | fry analyze --columns 2 \
   | tee results.txt \
-  | myapp visualize --output graph.png
+  | fry visualize --output graph.png
 
 # Conditional processing
-myapp check --quiet && myapp process || echo "Check failed"
+fry check --quiet && fry process || echo "Check failed"
 
 # Loop with pipe
 for file in *.log; do
   echo "Processing $file"
-  cat "$file" | myapp parse | myapp summarize >> summary.txt
+  cat "$file" | fry parse | fry summarize >> summary.txt
 done
 ```
 
@@ -112,10 +112,10 @@ done
 set -euo pipefail
 
 # Configuration
-MYAPP_BIN="myapp"
+MYAPP_BIN="fry"
 DATA_DIR="/var/data"
 OUTPUT_DIR="/var/output"
-LOG_FILE="/var/log/myapp-daily.log"
+LOG_FILE="/var/log/fry-daily.log"
 
 # Function to process a single file
 process_file() {
@@ -151,7 +151,7 @@ $MYAPP_BIN summarize "$OUTPUT_DIR"/*.json > "$OUTPUT_DIR/daily-summary.txt"
 
 ```python
 #!/usr/bin/env python3
-# myapp-wrapper.py - Python wrapper for myapp
+# fry-wrapper.py - Python wrapper for fry
 
 import subprocess
 import json
@@ -159,11 +159,11 @@ import sys
 from pathlib import Path
 
 class MyAppWrapper:
-    def __init__(self, binary_path="myapp"):
+    def __init__(self, binary_path="fry"):
         self.binary = binary_path
     
     def run_command(self, *args, input_data=None):
-        """Run myapp with given arguments."""
+        """Run fry with given arguments."""
         cmd = [self.binary] + list(args)
         
         result = subprocess.run(
@@ -225,9 +225,9 @@ if __name__ == "__main__":
 ### Makefile Integration
 
 ```makefile
-# Makefile - Build automation with myapp
+# Makefile - Build automation with fry
 
-MYAPP := myapp
+MYAPP := fry
 DATA_DIR := data
 OUTPUT_DIR := output
 SOURCES := $(wildcard $(DATA_DIR)/*.txt)
@@ -278,36 +278,36 @@ FROM alpine:latest
 
 RUN apk add --no-cache ncurses
 
-COPY myapp /usr/local/bin/
+COPY fry /usr/local/bin/
 COPY process.sh /usr/local/bin/
 
-ENTRYPOINT ["myapp"]
+ENTRYPOINT ["fry"]
 CMD ["--help"]
 ```
 
 ```bash
 # Build and run in Docker
-docker build -t myapp .
+docker build -t fry .
 
 # Process files in container
-docker run -v $(pwd)/data:/data myapp process /data/input.txt
+docker run -v $(pwd)/data:/data fry process /data/input.txt
 
 # Interactive mode
-docker run -it myapp interactive
+docker run -it fry interactive
 ```
 
 ### Systemd Service
 
 ```ini
-# /etc/systemd/system/myapp-monitor.service
+# /etc/systemd/system/fry-monitor.service
 [Unit]
 Description=MyApp Monitoring Service
 After=network.target
 
 [Service]
 Type=simple
-User=myapp
-ExecStart=/usr/local/bin/myapp monitor --daemon
+User=fry
+ExecStart=/usr/local/bin/fry monitor --daemon
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -321,13 +321,13 @@ WantedBy=multi-user.target
 
 ```bash
 # Process files every hour
-0 * * * * /usr/local/bin/myapp process /var/data/*.new --output /var/processed/
+0 * * * * /usr/local/bin/fry process /var/data/*.new --output /var/processed/
 
 # Daily summary at 2 AM
-0 2 * * * /usr/local/bin/myapp summarize --yesterday | mail -s "Daily Summary" admin@example.com
+0 2 * * * /usr/local/bin/fry summarize --yesterday | mail -s "Daily Summary" admin@example.com
 
 # Cleanup old files weekly
-0 3 * * 0 find /var/processed -mtime +30 -name "*.json" | xargs /usr/local/bin/myapp archive
+0 3 * * 0 find /var/processed -mtime +30 -name "*.json" | xargs /usr/local/bin/fry archive
 ```
 
 ## Performance Tips
@@ -336,38 +336,38 @@ WantedBy=multi-user.target
 
 ```bash
 # GNU Parallel for maximum throughput
-find . -name "*.dat" | parallel -j 8 myapp process {} --output {.}.json
+find . -name "*.dat" | parallel -j 8 fry process {} --output {.}.json
 
 # Process with progress bar
-find . -name "*.dat" | parallel --bar myapp process {} :::: -
+find . -name "*.dat" | parallel --bar fry process {} :::: -
 
 # Limit memory usage
-find . -name "*.dat" | parallel --memfree 1G myapp process {}
+find . -name "*.dat" | parallel --memfree 1G fry process {}
 ```
 
 ### Batch Operations
 
 ```bash
 # Process in chunks to reduce overhead
-find . -name "*.dat" -print0 | xargs -0 -n 100 myapp process --batch
+find . -name "*.dat" -print0 | xargs -0 -n 100 fry process --batch
 
 # Use named pipes for streaming
-mkfifo /tmp/myapp-pipe
-myapp monitor --output /tmp/myapp-pipe &
-cat /tmp/myapp-pipe | myapp analyze --stream
+mkfifo /tmp/fry-pipe
+fry monitor --output /tmp/fry-pipe &
+cat /tmp/fry-pipe | fry analyze --stream
 ```
 
 ### Resource Management
 
 ```bash
 # Limit CPU usage
-nice -n 10 myapp process large-dataset.dat
+nice -n 10 fry process large-dataset.dat
 
 # Limit memory
-ulimit -v 1048576 && myapp process --low-memory
+ulimit -v 1048576 && fry process --low-memory
 
 # Monitor resource usage
-/usr/bin/time -v myapp process large-file.dat
+/usr/bin/time -v fry process large-file.dat
 ```
 
 ## Error Handling
@@ -388,7 +388,7 @@ safe_process() {
   local retry_count=0
   
   while [ $retry_count -lt $max_retries ]; do
-    if myapp process "$file" 2>/tmp/myapp-error.log; then
+    if fry process "$file" 2>/tmp/fry-error.log; then
       return 0
     else
       retry_count=$((retry_count + 1))
@@ -398,7 +398,7 @@ safe_process() {
   done
   
   echo "Failed to process $file after $max_retries attempts"
-  cat /tmp/myapp-error.log
+  cat /tmp/fry-error.log
   return 1
 }
 
@@ -425,21 +425,21 @@ validate_and_process() {
   local input="$1"
   
   # Stage 1: Format validation
-  if ! myapp validate --format "$input"; then
+  if ! fry validate --format "$input"; then
     echo "Format validation failed" >&2
     return 1
   fi
   
   # Stage 2: Content validation
-  if ! myapp validate --content "$input"; then
+  if ! fry validate --content "$input"; then
     echo "Content validation failed" >&2
     return 2
   fi
   
   # Stage 3: Process with verification
   local output=$(mktemp)
-  if myapp process "$input" --output "$output"; then
-    if myapp verify "$output"; then
+  if fry process "$input" --output "$output"; then
+    if fry verify "$output"; then
       mv "$output" "${input%.dat}.json"
       return 0
     else

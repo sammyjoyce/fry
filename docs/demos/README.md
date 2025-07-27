@@ -12,15 +12,15 @@ This directory contains animated demonstrations of the CLI application's feature
 
 ```bash
 # Show help
-myapp --help
+fry --help
 
 # Show version
-myapp --version
+fry --version
 
 # Run commands
-myapp hello
-myapp hello "Demo User"
-myapp echo "Test message"
+fry hello
+fry hello "Demo User"
+fry echo "Test message"
 ```
 
 ### Progress Bar
@@ -29,7 +29,7 @@ myapp echo "Test message"
 
 ```bash
 # Show progress for a 10-step operation
-myapp progress --steps 10 --delay 500
+fry progress --steps 10 --delay 500
 ```
 
 ### Interactive Mode
@@ -57,16 +57,16 @@ myapp progress --steps 10 --delay 500
 
 ```bash
 # Show configuration
-myapp config show
+fry config show
 
 # Set values
-myapp config set output.format json
+fry config set output.format json
 
 # Get specific values
-myapp config get output.format
+fry config get output.format
 
 # Reset to defaults
-myapp config reset
+fry config reset
 ```
 
 ### Error Handling
@@ -75,13 +75,13 @@ myapp config reset
 
 ```bash
 # Non-existent file
-myapp process /tmp/nonexistent.txt
+fry process /tmp/nonexistent.txt
 
 # Invalid data
-myapp validate invalid-data.txt
+fry validate invalid-data.txt
 
 # Invalid options
-myapp --invalid-option
+fry --invalid-option
 ```
 
 ## Creating Demo GIFs
@@ -118,7 +118,7 @@ To record a custom demo:
 asciinema rec docs/demos/custom-demo.cast
 
 # Perform your demo actions
-myapp [commands...]
+fry [commands...]
 
 # Stop recording (Ctrl+D)
 

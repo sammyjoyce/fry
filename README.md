@@ -1,287 +1,270 @@
-# CLI Starter Template - C23 + Zig 🚀
+# fry
 
-[![GitHub Release](https://img.shields.io/github/v/release/sammyjoyce/c23-cli-template?style=for-the-badge)](https://github.com/sammyjoyce/c23-cli-template)
-[![License](https://img.shields.io/github/license/sammyjoyce/c23-cli-template?style=for-the-badge)](https://github.com/sammyjoyce/c23-cli-template/blob/main/LICENSE)
-[![CI Status](https://img.shields.io/github/actions/workflow/status/sammyjoyce/c23-cli-template/ci.yaml?style=for-the-badge&label=CI)](https://github.com/sammyjoyce/c23-cli-template/actions/workflows/ci.yaml)
-[![Codecov](https://img.shields.io/codecov/c/github/sammyjoyce/c23-cli-template?style=for-the-badge&logo=codecov)](https://codecov.io/gh/sammyjoyce/c23-cli-template)
-[![Zig](https://img.shields.io/badge/Zig-master-F7A41D?style=for-the-badge&logo=zig)](https://ziglang.org/)
-[![Build](https://img.shields.io/github/actions/workflow/status/sammyjoyce/c23-cli-template/ci.yaml?style=for-the-badge&label=Build)](https://github.com/sammyjoyce/c23-cli-template/actions/workflows/ci.yaml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/sammyjoyce/c23-cli-template/ci.yaml?style=for-the-badge&label=CodeQL)](https://github.com/sammyjoyce/c23-cli-template/actions/workflows/ci.yaml)
-[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/sammyjoyce/c23-cli-template?style=for-the-badge&label=OpenSSF%20Scorecard)](https://securityscorecards.dev/viewer/?uri=github.com/sammyjoyce/c23-cli-template)
-
-## A modern C23 CLI application starter template with Zig build system
-
-[Use this template](https://github.com/sammyjoyce/c23-cli-template/generate) • [View Demo](https://github.com/sammyjoyce/c23-cli-template) • [Report Bug](https://github.com/sammyjoyce/c23-cli-template/issues)
+> A fast, cross-platform CLI for managing **Claude Code** OAuth accounts and multiplexing multiple Claude sessions in a single NCurses-powered terminal.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-- 🚀 **Modern C23** - Latest C standard with Aro compiler
-- ⚡ **Zig Build System** - Fast, reliable builds with cross-compilation
-- 🏗️ **Well-Structured** - Organized project layout ready for growth
-- 🧪 **Testing Included** - Test framework with examples
-- 🎨 **Smart CLI** - Colored output, help text, argument parsing
-- 🖼️ **TUI Support** - NCurses integration for interactive terminal UIs
-- 🔧 **Configuration** - Layered config system (file → env → args)
-- 📦 **Minimal Dependencies** - Only Zig, libc, and ncurses
-- 🤖 **CI/CD Ready** - GitHub Actions workflow included
-- 🔄 **Conditional Runners** - Uses self-hosted runners for template repo, GitHub-hosted for derived repos
-- ⚡ **Caching** - Speeds up builds by caching Zig dependencies and build artifacts
-- 🔒 **Release Gating** - Ensures releases only happen on tags in main branch
-- 🛡️ **Security Scanning** - CodeQL integration for vulnerability detection
-- 📦 **Artifact Management** - Unique artifact naming to avoid collisions
-- 🏷️ **Version Pinning** - Pinned GitHub Actions versions for reproducibility
-- 🚫 **Concurrency Control** - Cancels redundant CI runs on same branch
-- 📊 **Dynamic Binary Naming** - Extracts binary name from build.zig.zon
-- 🧹 **Template Cleanup** - Automated cleanup of template-specific files and placeholders
-- 📚 **OpenCLI Compliant** - Standardized CLI behavior
-- 🔄 **Dependency Updates** - Automated updates with Dependabot/Renovate
-- 📝 **Pre-commit Hooks** - Code quality enforcement before commits
-- 🐳 **Devcontainer Support** - Consistent development environments
-- 📋 **Comprehensive Documentation** - Detailed guides and examples
+• **Multi-account OAuth wallet** – securely store, refresh and switch between unlimited Claude Code accounts.  
+• **Session multiplexer** – spin up several Claude instances side-by-side in a tiled NCurses UI.  
+• **One-command account switching** – `fry use personal` (no more copying tokens by hand).  
+• **Quota management** – automatically disable accounts when rate-limited, re-enable after cooldown.  
+• **Session persistence** – automatically save / restore chat history across restarts.  
+• **Secure by design** – tokens are AES-256 encrypted on disk.  
+• **Portable build** – modern C23 core wrapped by the Zig build system for painless cross-compiles.
 
-## 🎯 Quick Start
+---
 
-### Create Your Project
+## 🚀 Quick Start
 
-### Option 1: GitHub UI
+### 1 · Prerequisites
 
-1. Click ["Use this template"](https://github.com/sammyjoyce/c23-cli-template/generate)
-2. Name your repository
-3. Click "Create repository"
+* [Zig](https://ziglang.org/) (master branch recommended) – easiest via [`zvm`](https://github.com/tristanisham/zvm)
+* A C compiler & ncurses development headers
+* Valid Claude Code OAuth credentials (see below)
 
-### Option 2: GitHub CLI
+### 2 · Build & run
 
 ```bash
-gh repo create my-cli \
-  --template sammyjoyce/c23-cli-template \
-  --public \
-  --clone
-```
-
-### Build & Run
-
-```bash
-# Clone your new repo
-git clone https://github.com/YOU/YOUR-REPO
-cd YOUR-REPO
-
-# Build (with TUI support)
+# clone & build (ReleaseSafe)
+git clone https://github.com/yourname/fry.git && cd fry
 zig build -Doptimize=ReleaseSafe
 
-# Build without TUI (if ncurses is not available)
-zig build -Doptimize=ReleaseSafe -Denable-tui=false
-
-# Run
-./zig-out/bin/YOUR-REPO --help
+# view help
+./zig-out/bin/fry --help
 ```
 
-## 📖 What's Included
+Or simply run `just run` if you have [just](https://github.com/casey/just) installed.
 
-### Project Structure
-
-```text
-your-cli/
-├── src/
-│   ├── main.c              # Entry point
-│   ├── core/               # Core functionality
-│   │   ├── config.c/h      # Configuration
-│   │   ├── error.c/h       # Error handling
-│   │   └── types.h         # Type definitions
-│   ├── cli/                # CLI interface
-│   │   ├── args.c/h        # Argument parsing
-│   │   └── help.c/h        # Help text
-│   ├── io/                 # Input/Output
-│   └── utils/              # Utilities
-├── test/                   # Test suite
-├── build.zig               # Build config
-└── opencli.json            # CLI specification
-```
-
-### Example Commands
-
-The template includes working examples:
+### 3 · Add your first account
 
 ```bash
-# Greeting command
-$ myapp hello
-Hello, World!
+# Add account interactively
+fry accounts add --name personal
 
-$ myapp hello Alice
-Hello, Alice!
+# Or import from Claude Code credentials
+fry accounts add --file ~/.claude/.credentials.json --name work
 
-# Echo command
-$ myapp echo Hello from CLI
-Hello from CLI
-
-# Info command
-$ myapp info
-Application: myapp
-Version: 1.0.0
-Build: Jul 27 2025 13:16:11
-
-# Interactive TUI menu
-$ myapp menu
-# Opens an ncurses-based interactive menu
+# List all accounts
+fry accounts list
 ```
 
-## 🛠️ Customization Guide
+---
 
-### 1. After Creating Your Repo
+## 🛠️  Command Reference
 
-The template automatically:
+### CLI Grammar
+```
+fry <noun> <verb> [options] [args]
+```
 
-- ✅ Replaces `myapp` with your project name
-- ✅ Updates all references and metadata
-- ✅ Preserves template structure
-- ✅ Removes template-specific files
-- ✅ Commits the changes
+### Core Commands
 
-Check the **Actions** tab to see progress.
+#### Accounts
+```bash
+fry accounts list                    # List all stored accounts
+fry accounts add --name personal     # Add new account (interactive)
+fry accounts add --file creds.json   # Import from JSON file
+fry accounts rename old new          # Rename an account
+fry accounts rm work                 # Remove account (with prompt)
+fry accounts use personal            # Set default account
+fry accounts export work             # Export tokens to stdout
 
-### 2. Add Your Commands
+# Quota management
+fry accounts disable work --until 5h  # Disable for 5 hours
+fry accounts disable work --until 14:30  # Disable until 2:30 PM
+fry accounts disable work            # Disable indefinitely
+fry accounts enable work             # Re-enable account
+fry accounts status                  # Show all accounts with quota status
+```
 
-Edit `src/main.c`:
+#### Sessions
+```bash
+fry sessions list                    # Show running + saved sessions
+fry sessions start                   # Start new session in current TTY
+fry sessions start --name project    # Start named session
+fry sessions attach 3fa85f64         # Attach to running session
+fry sessions save 3fa85f64           # Persist session to disk
+fry sessions restore chat.json       # Load saved session
+fry sessions kill 3fa85f64           # Terminate session
+```
 
-```c
-if (strcmp(command, "deploy") == 0) {
-    printf("Deploying application...\n");
-    // Your deployment logic
-    return APP_SUCCESS;
+#### Multiplexer
+```bash
+fry mux up                           # Launch with all accounts
+fry mux up work personal             # Launch specific accounts
+fry mux ls                           # List active multiplexers
+fry mux attach abc123                # Attach to multiplexer
+fry mux send abc123 "clear"          # Broadcast command to all panes
+fry mux down abc123                  # Close multiplexer
+```
+
+#### Configuration
+```bash
+fry config show                      # Display merged config
+fry config show --json               # Machine-readable output
+fry config set default_account work  # Update a setting
+fry config edit                      # Open in $EDITOR
+fry config reset                     # Reset to defaults
+```
+
+#### Token Management
+```bash
+fry tokens inspect personal          # Decode & display token info
+fry tokens refresh personal          # Force refresh using refresh_token
+fry tokens expire work               # Mark as expired (debug)
+```
+
+### Global Options
+```bash
+--config PATH     # Use alternate config file
+--account NAME    # Override default account
+--json            # Machine-readable output
+--verbose, -v     # Increase log level (repeatable)
+--no-color        # Disable ANSI colors
+--help            # Show help for any command
+--version         # Print version info
+```
+
+### Common Workflows
+```bash
+# Import account from clipboard
+pbpaste | fry accounts import --stdin --name work
+
+# Quick session with specific account
+fry sessions start --account personal
+
+# Export session transcript
+fry sessions start --name interview | tee transcript.md
+
+# Refresh token in CI/scripts
+fry tokens refresh personal --json
+
+# Disable account after hitting rate limit
+fry accounts disable work --until 5h
+
+# Auto-rotate through available accounts
+fry mux up --auto-rotate --skip-disabled
+```
+
+---
+
+## ⚙️  Configuration
+
+`fry` resolves settings in the following order:
+
+1. CLI flags  
+2. Environment variables (`FRY_*`)  
+3. `~/.fry/config.json` (or path provided via `--config`)
+
+```jsonc
+{
+  "log_level": "info",
+  "default_account": "personal",
+
+  "oauth": {
+    "token_endpoint": "https://api.anthropic.com/oauth/token",
+    "auth_endpoint": "https://console.anthropic.com/oauth/authorize",
+    "redirect_uri": "http://localhost:8080/callback",
+    "scopes": ["user:inference", "user:profile"]
+  },
+
+  "multiplex": {
+    "max_instances": 5,
+    "default_layout": "grid",
+    "auto_rotate_on_quota": true,
+    "tui": {
+      "enable_mouse": true,
+      "color_scheme": "default"
+    }
+  },
+
+  "quota": {
+    "auto_disable_on_limit": true,
+    "default_cooldown": "5h",
+    "check_interval": "5m"
+  }
 }
 ```
 
-### 3. Update Help Text
+### OAuth Requirements
 
-Edit `src/cli/help.c` to describe your commands.
+Fry works with Claude Code's OAuth system, which requires:
 
-### 4. Add Source Files
+| Component        | Details                                              |
+|------------------|------------------------------------------------------|
+| **OAuth Flow**   | Authorization Code flow with PKCE                    |
+| **Token Format** | Anthropic OAuth tokens                               |
+| **Required Scopes** | `user:inference`, `user:profile`                  |
+| **Token Storage** | JSON structure matching Claude's `.credentials.json` |
 
-1. Create your `.c` file in `src/`
-2. Add to `build.zig`:
-
-```zig
-const c_sources = [_][]const u8{
-    // ... existing files ...
-    "src/features/deploy.c",  // Your new file
-};
+#### Token Structure
+```json
+{
+  "claudeAiOauth": {
+    "accessToken": "sk-ant-oat01-...",
+    "refreshToken": "sk-ant-ort01-...",
+    "expiresAt": 1753518682371,
+    "scopes": ["user:inference", "user:profile"],
+    "subscriptionType": "max"
+  }
+}
 ```
 
-## 🧪 Development
+| Field            | Format                    | Notes                                                |
+|------------------|---------------------------|------------------------------------------------------|
+| Access Token     | `sk-ant-oat01-…`          | Bearer token for API calls                           |
+| Refresh Token    | `sk-ant-ort01-…`          | For refreshing expired access tokens                 |
+| Expires At       | Unix timestamp (ms)       | When the access token expires                        |
+| Scopes           | Array of strings          | Must include inference and profile                   |
+| Subscription     | String                    | Account tier (max, pro, etc.)                        |
 
-### Prerequisites
+Tokens are AES-encrypted and stored under `~/.fry/accounts/`.
 
-- **Zig** (master branch) - Install via [zvm](https://github.com/tristanisham/zvm)
-- **C compiler** - For system libraries
-- **NCurses** - For TUI support
-  - Ubuntu/Debian: `sudo apt-get install libncurses-dev`
-  - macOS: `brew install ncurses`
-  - Fedora: `sudo dnf install ncurses-devel`
-
-### Development Environment
-
-This template provides several tools to enhance your development experience:
-
-- **Devcontainer Support** - Pre-configured development environment with all dependencies
-- **VS Code Settings** - Opinionated settings for C/Zig development
-- **Pre-commit Hooks** - Automated code quality checks before commits
-- **Tasks Configuration** - Predefined build and test tasks for VS Code
-- **Debug Configuration** - Ready-to-use debugging setup for VS Code
-
-### Commands
-
-```bash
-# Build
-zig build                    # Debug build
-zig build -Doptimize=ReleaseSafe  # Release build
-
-# Test
-zig build test              # Run all tests
-
-# Clean
-zig build clean             # Remove build artifacts
-
-# Format
-zig fmt build.zig          # Format build file
-```
-
-### Configuration
-
-Your app supports config from multiple sources:
-
-1. **CLI arguments** (highest priority)
-2. **Environment variables**
-3. **Config file** (`~/.config/yourapp/config.json`)
-4. **Defaults**
-
-## 📚 Documentation
-
-### Getting Started
-- 📖 [**Using This Template**](USING_THIS_TEMPLATE.md) - Detailed setup guide
-- 🚀 [**Quick Start Guide**](#-quick-start) - Get up and running quickly
-- 🔧 [**Installation**](#-installation) - Platform-specific instructions
-
-### Developer Resources
-- 🏗️ [**Architecture Overview**](docs/ARCHITECTURE.md) - System design and module structure
-- ⚡ [**Zig Primer for C Developers**](docs/ZIG_PRIMER.md) - Understanding the build system
-- 🤝 [**Contributing Guide**](CONTRIBUTING.md) - How to contribute to the project
-- 🧪 [**Advanced Usage Examples**](examples/advanced-usage.md) - Piping, scripting, and integration
-
-### Examples & Demos
-- 📝 [**Adding Commands**](examples/adding-a-command.md) - Extend the CLI
-- 🎨 [**Custom TUI Components**](examples/custom-tui.md) - Build interactive interfaces
-- ⚙️ [**Configuration Guide**](examples/config.json) - Config file examples
-- 🎬 [**Demo Gallery**](docs/demos/README.md) - Animated demonstrations
-
-### Project Information
-- 🛡️ [**Security Policy**](SECURITY.md) - Reporting vulnerabilities
-- 📋 [**Code of Conduct**](CODE_OF_CONDUCT.md) - Community guidelines
-- 📝 [**Changelog**](CHANGELOG.md) - Version history
-- 📜 [**License**](LICENSE) - MIT License
-
-## 🤔 Why This Stack?
-
-- **C23** - Latest features: `typeof`, `_BitInt`, better type safety
-- **Zig Build** - Superior to Make/CMake, built-in cross-compilation
-- **Aro Compiler** - Better C23 support than most system compilers
-- **Minimal Dependencies** - Just Zig and libc, no complex toolchains
-
-## 🆘 Getting Help
-
-### Template Issues
-
-For problems with the template itself:
-
-- Check [existing issues](https://github.com/sammyjoyce/c23-cli-template/issues)
-- Create a new issue
-- Read [template support](/.github/TEMPLATE_SUPPORT.md)
-
-### Your Project Issues
-
-For issues with your generated project:
-
-- Use your own repository's issues
-- Check Zig [documentation](https://ziglang.org/documentation/)
-- See C23 [reference](https://en.cppreference.com/w/c/23)
-
-## 🌟 Projects Using This Template
-
-> Using this template? [Add your project!](https://github.com/sammyjoyce/c23-cli-template/edit/main/README.md)
-
-- [Example CLI](https://github.com/example/cli) - Description
-- Your project here!
-
-## 📄 License
-
-This template is MIT licensed. See [LICENSE](LICENSE) for details.
-
-When you use this template, you can choose any license for your project.
+**Note**: Fry can import existing Claude Code credentials directly from `~/.claude/.credentials.json`.
 
 ---
 
-**Ready to build your CLI app?**
+## 📂 Project Layout
 
-[![Use this template](https://img.shields.io/badge/Use%20this-template-success?style=for-the-badge&logo=github)](https://github.com/sammyjoyce/c23-cli-template/generate)
+```
+fry/
+├── src/
+│   ├── cli/            # flag parsing & command dispatch
+│   ├── core/           # business logic (oauth.c, multiplex.c, session.c)
+│   ├── tui/            # ncurses widgets (accounts.c, multiplexer.c …)
+│   └── utils/          # logging, colors, memory helpers
+├── docs/               # additional documentation
+├── test/               # Zig unit tests + C test harness
+└── build.zig           # Zig build script
+```
 
-Made with ❤️ by the open source community
+---
+
+## 🧪 Developing
+
+* **Debug build** – `zig build`  
+* **Cross-compile** – `zig build -Dtarget=x86_64-linux`  
+* **Run tests** – `zig build test`
+
+---
+
+## 🤝 Contributing
+
+Bug reports and pull requests are welcome. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
+
+## 📝 License
+
+MIT © 2025 Your Name
+
+---
+
+### Acknowledgements
+
+* [Zig](https://ziglang.org/) – build system & cross-compilation
+* [Aro](https://github.com/Vexu/arocc) – lightweight C23 compiler
+* [OpenCLI](https://opencli.dev/) – command spec
+* [Claude Code](https://claude.ai) – underlying AI platform

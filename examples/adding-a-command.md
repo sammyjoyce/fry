@@ -77,8 +77,8 @@ Add your command to the `commands` array:
     }
   ],
   "examples": [
-    "myapp greet Alice",
-    "myapp greet Alice Bob Charlie"
+    "fry greet Alice",
+    "fry greet Alice Bob Charlie"
   ]
 }
 ```
@@ -95,7 +95,7 @@ fn testGreetCommand(allocator: std.mem.Allocator) !void {
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/myapp", "greet", "Alice" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "greet", "Alice" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
@@ -108,7 +108,7 @@ fn testGreetCommand(allocator: std.mem.Allocator) !void {
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/myapp", "greet", "Alice", "Bob" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "greet", "Alice", "Bob" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
@@ -122,7 +122,7 @@ fn testGreetCommand(allocator: std.mem.Allocator) !void {
     {
         const result = try std.process.Child.run(.{
             .allocator = allocator,
-            .argv = &[_][]const u8{ "./zig-out/bin/myapp", "greet" },
+            .argv = &[_][]const u8{ "./zig-out/bin/fry", "greet" },
         });
         defer allocator.free(result.stdout);
         defer allocator.free(result.stderr);
@@ -151,7 +151,7 @@ zig build
 zig build test
 
 # Try your new command
-./zig-out/bin/myapp greet Alice Bob Charlie
+./zig-out/bin/fry greet Alice Bob Charlie
 ```
 
 ## Result

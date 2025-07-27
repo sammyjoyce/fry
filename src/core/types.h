@@ -61,7 +61,7 @@ typedef struct {
 
 // Application name
 #ifndef APP_NAME
-#define APP_NAME "myapp"
+#define APP_NAME "fry"
 #endif
 
 // Build date - should be provided by build system

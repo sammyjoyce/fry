@@ -61,7 +61,7 @@ pub fn build(b: *std.Build) void {
 
     // Create executable from C sources
     const exe = b.addExecutable(.{
-        .name = "myapp",
+        .name = "fry",
         .target = target,
         .optimize = optimize,
     });
@@ -133,7 +133,7 @@ The `build.zig.zon` file manages dependencies and project metadata:
 
 ```zig
 .{
-    .name = "myapp",
+    .name = "fry",
     .version = "0.1.0",
     
     // Dependencies
@@ -234,7 +234,7 @@ CC = gcc
 CFLAGS = -std=c23 -Wall -O2
 LDFLAGS = -lncurses
 
-myapp: main.o args.o
+fry: main.o args.o
     $(CC) $(LDFLAGS) -o $@ $^
 
 %.o: %.c
@@ -244,7 +244,7 @@ myapp: main.o args.o
 ```zig
 // build.zig equivalent
 const exe = b.addExecutable(.{
-    .name = "myapp",
+    .name = "fry",
     .target = target,
     .optimize = .ReleaseSafe,
 });

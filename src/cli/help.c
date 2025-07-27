@@ -152,15 +152,15 @@ void app_print_verbose_usage(const char *program_name) {
   printf("  12   Permission denied\n\n");
 
   printf("%sAUTHOR%s\n", bold, reset);
-  printf("  Written by Your Name\n\n");
+  printf("  Written by Sam\n\n");
 
   printf("%sREPORTING BUGS%s\n", bold, reset);
   printf(
       "  Report bugs to: "
-      "https://github.com/yourusername/yourproject/issues\n\n");
+      "https://github.com/sam/yourproject/issues\n\n");
 
   printf("%sSEE ALSO%s\n", bold, reset);
-  printf("  Project homepage: https://github.com/yourusername/yourproject\n");
+  printf("  Project homepage: https://github.com/sam/yourproject\n");
   printf(
-      "  Documentation: https://github.com/yourusername/yourproject#readme\n");
+      "  Documentation: https://github.com/sam/yourproject#readme\n");
 }
