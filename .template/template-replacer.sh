@@ -262,6 +262,10 @@ perform_replacements() {
             for placeholder in $placeholders; do
                 echo "  Replacing '$placeholder' with '${replacements[$var]}'..."
                 eval "$find_cmd" | while read file; do
+                    # Extra safety: never modify template system files
+                    if [[ "$file" == *"/.template/"* ]] || [[ "$file" == *"/template-"* ]]; then
+                        continue
+                    fi
                     if grep -q "$placeholder" "$file" 2>/dev/null; then
                         replace_in_file "$file" "$placeholder" "${replacements[$var]}"
                     fi
