@@ -66,3 +66,17 @@ void app_config_set_program_name(app_config_t *config, const char *name);
 void app_config_set_command(app_config_t *config, const char *command);
 void app_config_add_command_arg(app_config_t *config, const char *arg);
 void app_config_set_config_file(app_config_t *config, const char *path);
+
+// Noun/verb command support
+const char *app_config_get_noun(const app_config_t *config);
+const char *app_config_get_verb(const app_config_t *config);
+void app_config_set_noun(app_config_t *config, const char *noun);
+void app_config_set_verb(app_config_t *config, const char *verb);
+
+// OAuth account support
+const char *app_config_get_default_account(const app_config_t *config);
+void app_config_set_default_account(app_config_t *config, const char *account);
+
+// Configuration persistence
+APP_NODISCARD app_error app_config_save(const app_config_t *config);
+APP_NODISCARD app_error app_config_load_default(app_config_t *config);

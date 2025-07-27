@@ -248,6 +248,22 @@ fry/
 * **Cross-compile** – `zig build -Dtarget=x86_64-linux`  
 * **Run tests** – `zig build test`
 
+### macOS Code Signing
+
+On macOS 15+, unsigned binaries have restricted keychain access. To enable full keychain functionality:
+
+```bash
+# Build and sign with ad-hoc signature (for local development)
+zig build
+zig build sign
+
+# Or sign with a developer certificate (for distribution)
+zig build -Dsign-identity="Developer ID Application: Your Name"
+zig build sign-cert
+```
+
+Without signing, fry will automatically fall back to secure in-memory token storage.
+
 ---
 
 ## 🤝 Contributing

@@ -28,6 +28,34 @@ test-release:
 test-fast:
     zig build test -Doptimize=ReleaseFast
 
+# Build and run TUI tests
+test-tui:
+    cd test && make -f Makefile test
+
+# Run specific TUI test suite
+test-tui-ncurses:
+    cd test && make -f Makefile ncurses
+
+test-tui-pane:
+    cd test && make -f Makefile pane
+
+test-tui-layout:
+    cd test && make -f Makefile layout
+
+test-tui-pty:
+    cd test && make -f Makefile pty
+
+test-tui-mux:
+    cd test && make -f Makefile mux
+
+# Build TUI tests without running
+build-tui-tests:
+    cd test && make -f Makefile all
+
+# Clean TUI test artifacts
+clean-tui-tests:
+    cd test && make -f Makefile clean
+
 # Check code formatting
 fmt:
     zig build fmt

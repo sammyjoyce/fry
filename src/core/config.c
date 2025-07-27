@@ -7,6 +7,7 @@
 #include <limits.h>
 #ifndef _WIN32
 #include <pwd.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #else
 #include <io.h>
@@ -17,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../utils/json.h"
 #include "../utils/logging.h"
 #include "../utils/memory.h"
 
@@ -25,9 +27,12 @@
 struct app_config {
   char *program_name;
   char *command;
+  char *noun;
+  char *verb;
   char *command_args[MAX_COMMAND_ARGS];
   int command_arg_count;
   char *config_file;
+  char *default_account;
   bool quiet;
   bool debug;
   bool verbose;
@@ -68,8 +73,17 @@ void app_config_destroy(app_config_t *config) {
   if (config->command) {
     free(config->command);
   }
+  if (config->noun) {
+    free(config->noun);
+  }
+  if (config->verb) {
+    free(config->verb);
+  }
   if (config->config_file) {
     free(config->config_file);
+  }
+  if (config->default_account) {
+    free(config->default_account);
   }
 
   // Free command arguments
@@ -105,6 +119,13 @@ static char *find_config_file(void) {
 #else
   const char *home = getenv("HOME");
   if (home) {
+    // Check .fry directory first
+    snprintf(config_path, PATH_MAX, "%s/.fry/config.json", home);
+    if (access(config_path, R_OK) == 0) {
+      return strdup(config_path);
+    }
+
+    // Then check .config directory
     snprintf(config_path, PATH_MAX, "%s/.config/%s/config.json", home,
              APP_NAME);
     if (access(config_path, R_OK) == 0) {
@@ -171,11 +192,34 @@ app_error app_config_load_file(app_config_t *const config, const char *path) {
   fclose(f);
 
   // Parse JSON
-  // Note: In a real implementation, you'd parse JSON here
-  // For now, we'll just log that we loaded the file
-  LOG_INFO("Loaded configuration from %s", config_path);
-
+  json_value_t *root;
+  app_error err = json_parse(&root, content);
   app_secure_free(content, size + 1);
+
+  if (err != APP_SUCCESS) {
+    LOG_ERROR("Failed to parse config file: %s", config_path);
+    free(config_path);
+    return err;
+  }
+
+  // Extract configuration values
+  if (root->type == JSON_TYPE_OBJECT) {
+    json_value_t *log_level = json_object_get(root->object_val, "log_level");
+    if (log_level && log_level->type == JSON_TYPE_STRING) {
+      if (strcmp(log_level->string_val, "debug") == 0) {
+        config->debug = true;
+      }
+    }
+
+    json_value_t *default_account =
+        json_object_get(root->object_val, "default_account");
+    if (default_account && default_account->type == JSON_TYPE_STRING) {
+      app_config_set_default_account(config, default_account->string_val);
+    }
+  }
+
+  json_value_destroy(root);
+  LOG_INFO("Loaded configuration from %s", config_path);
   free(config_path);
   return APP_SUCCESS;
 }
@@ -320,4 +364,140 @@ void app_config_set_config_file(app_config_t *config, const char *path) {
     }
     config->config_file = strdup(path);
   }
+}
+
+// Noun/verb getters and setters
+const char *app_config_get_noun(const app_config_t *config) {
+  return config ? config->noun : NULL;
+}
+
+const char *app_config_get_verb(const app_config_t *config) {
+  return config ? config->verb : NULL;
+}
+
+void app_config_set_noun(app_config_t *config, const char *noun) {
+  if (config && noun) {
+    if (config->noun) {
+      free(config->noun);
+    }
+    config->noun = strdup(noun);
+  }
+}
+
+void app_config_set_verb(app_config_t *config, const char *verb) {
+  if (config && verb) {
+    if (config->verb) {
+      free(config->verb);
+    }
+    config->verb = strdup(verb);
+  }
+}
+
+// OAuth account support
+const char *app_config_get_default_account(const app_config_t *config) {
+  return config ? config->default_account : NULL;
+}
+
+void app_config_set_default_account(app_config_t *config, const char *account) {
+  if (config && account) {
+    if (config->default_account) {
+      free(config->default_account);
+    }
+    config->default_account = strdup(account);
+  }
+}
+
+// Configuration persistence
+app_error app_config_save(const app_config_t *config) {
+  if (!config) {
+    return APP_ERROR_INVALID_ARG;
+  }
+
+  // Get config file path
+  char *config_path = find_config_file();
+  if (!config_path) {
+    // Create default path
+    char *home = getenv("HOME");
+    if (!home) {
+      return APP_ERROR_ENV;
+    }
+
+    static char path[PATH_MAX];
+    snprintf(path, sizeof(path), "%s/.fry/config.json", home);
+    config_path = path;
+
+    // Ensure directory exists
+    char dir[PATH_MAX];
+    snprintf(dir, sizeof(dir), "%s/.fry", home);
+    mkdir(dir, 0700);
+  }
+
+  // Build JSON object
+  json_value_t *root = json_value_object();
+  json_object_t *obj = root->object_val;
+
+  // Add basic settings
+  json_object_set(obj, "log_level",
+                  json_value_string(config->debug ? "debug" : "info"));
+  json_object_set(obj, "default_account",
+                  json_value_string(
+                      config->default_account ? config->default_account : ""));
+
+  // Add OAuth settings
+  json_value_t *oauth = json_value_object();
+  json_object_set(
+      oauth->object_val, "token_endpoint",
+      json_value_string("https://console.anthropic.com/v1/oauth/token"));
+  json_object_set(
+      oauth->object_val, "auth_endpoint",
+      json_value_string("https://console.anthropic.com/oauth/authorize"));
+  json_object_set(
+      oauth->object_val, "redirect_uri",
+      json_value_string("https://console.anthropic.com/oauth/code/callback"));
+  json_object_set(obj, "oauth", oauth);
+
+  // Add multiplex settings
+  json_value_t *multiplex = json_value_object();
+  json_object_set(multiplex->object_val, "max_instances", json_value_number(5));
+  json_object_set(multiplex->object_val, "default_layout",
+                  json_value_string("grid"));
+  json_object_set(multiplex->object_val, "auto_rotate_on_quota",
+                  json_value_bool(true));
+  json_object_set(obj, "multiplex", multiplex);
+
+  // Serialize to JSON
+  char *json_str;
+  app_error err = json_stringify_pretty(&json_str, root);
+  json_value_destroy(root);
+
+  if (err != APP_SUCCESS) {
+    return err;
+  }
+
+  // Write to file
+  FILE *fp = fopen(config_path, "w");
+  if (!fp) {
+    app_free(json_str);
+    return APP_ERROR_IO;
+  }
+
+  fprintf(fp, "%s\n", json_str);
+  fclose(fp);
+  app_free(json_str);
+
+  return APP_SUCCESS;
+}
+
+app_error app_config_load_default(app_config_t *config) {
+  if (!config) {
+    return APP_ERROR_INVALID_ARG;
+  }
+
+  char *config_path = find_config_file();
+  if (!config_path) {
+    // No config file found, use defaults
+    return APP_SUCCESS;
+  }
+
+  return app_config_load_file(config, config_path);
 }

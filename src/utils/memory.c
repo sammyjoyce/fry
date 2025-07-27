@@ -135,3 +135,81 @@ char *app_secure_strdup(const char *s) {
   memcpy(new_str, s, len + 1);
   return new_str;
 }
+
+// Standard memory wrappers with error handling
+void *app_malloc(size_t size) {
+  if (size == 0) {
+    LOG_WARNING("app_malloc called with size 0");
+    return NULL;
+  }
+
+  void *ptr = malloc(size);
+  if (!ptr) {
+    LOG_ERROR("Failed to allocate %zu bytes", size);
+    abort();
+  }
+
+  return ptr;
+}
+
+void *app_calloc(size_t nmemb, size_t size) {
+  if (nmemb == 0 || size == 0) {
+    LOG_WARNING("app_calloc called with zero size");
+    return NULL;
+  }
+
+  void *ptr = calloc(nmemb, size);
+  if (!ptr) {
+    LOG_ERROR("Failed to allocate %zu x %zu bytes", nmemb, size);
+    abort();
+  }
+
+  return ptr;
+}
+
+void *app_realloc(void *ptr, size_t size) {
+  if (size == 0) {
+    app_free(ptr);
+    return NULL;
+  }
+
+  void *new_ptr = realloc(ptr, size);
+  if (!new_ptr && size > 0) {
+    LOG_ERROR("Failed to reallocate to %zu bytes", size);
+    abort();
+  }
+
+  return new_ptr;
+}
+
+void app_free(void *ptr) {
+  free(ptr);
+}
+
+char *app_strdup(const char *str) {
+  if (!str) {
+    return NULL;
+  }
+
+  char *dup = strdup(str);
+  if (!dup) {
+    LOG_ERROR("Failed to duplicate string");
+    abort();
+  }
+
+  return dup;
+}
+
+char *app_strndup(const char *str, size_t n) {
+  if (!str) {
+    return NULL;
+  }
+
+  char *dup = strndup(str, n);
+  if (!dup) {
+    LOG_ERROR("Failed to duplicate string with length %zu", n);
+    abort();
+  }
+
+  return dup;
+}
