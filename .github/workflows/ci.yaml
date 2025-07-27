@@ -1,0 +1,408 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+
+  pull_request:
+    branches: [main]
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  ZIG_VERSION: master
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: myapp-linux
+          - os: macos-latest
+            artifact_name: myapp-macos
+          - os: windows-latest
+            artifact_name: myapp-windows
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+
+      - name: Get Zig version
+        id: zig-version
+        run: |
+          echo "ZIG_VERSION=$(zig version)" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Cache Zig build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/zig
+            zig-out
+          key: ${{ runner.os }}-zig-${{ env.ZIG_VERSION }}-${{ hashFiles('build.zig', 'build.zig.zon') }}
+          restore-keys: |
+            ${{ runner.os }}-zig-${{ env.ZIG_VERSION }}-
+            ${{ runner.os }}-zig-
+
+      - name: Extract binary name
+        id: extract_binary_name
+        run: |
+          # Extract the name field from build.zig.zon, handling both quoted and unquoted formats
+          BINARY_NAME=$(awk '/\.name = / {gsub(/.*\.name = /, ""); gsub(/[,.]/, ""); gsub(/"/, ""); print}' build.zig.zon)
+          echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
+          echo "binary_name=$BINARY_NAME" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Install dependencies
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y libncurses-dev
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            brew install ncurses
+          fi
+        shell: bash
+
+      - name: Install pdcurses (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Install vcpkg
+          git clone https://github.com/Microsoft/vcpkg.git
+          cd vcpkg
+          ./bootstrap-vcpkg.bat
+          ./vcpkg integrate install
+          
+          # Install pdcurses
+          ./vcpkg install pdcurses:x64-windows
+          echo "VCPKG_ROOT=$(pwd)" >> $GITHUB_ENV
+          # Also set library paths for Windows
+          echo "LIB=$LIB;$(pwd)/installed/x64-windows/lib" >> $GITHUB_ENV
+          echo "INCLUDE=$INCLUDE;$(pwd)/installed/x64-windows/include" >> $GITHUB_ENV
+          cd ..
+        shell: bash
+
+      - name: Run `install` step
+        run: zig build install
+        timeout-minutes: 10
+        shell: bash
+
+      - name: Run `check` step
+        run: zig build check
+        timeout-minutes: 10
+        shell: bash
+
+      - name: Run `test` step
+        run: zig build test
+        timeout-minutes: 15
+        shell: bash
+
+      - name: Test binary functionality
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            BINARY_EXT=".exe"
+          else
+            BINARY_EXT=""
+          fi
+          
+          # Debug: List contents of zig-out/bin
+          echo "Contents of zig-out/bin:"
+          ls -la zig-out/bin/ || echo "zig-out/bin directory not found"
+          
+          # Check if binary exists
+          if [ ! -f "./zig-out/bin/$BINARY_NAME$BINARY_EXT" ]; then
+            echo "Error: Binary ./zig-out/bin/$BINARY_NAME$BINARY_EXT not found!"
+            exit 1
+          fi
+          
+          # On Windows, check for DLL dependencies
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            echo "Checking binary dependencies:"
+            # Try to run with full path to see actual error
+            "./zig-out/bin/$BINARY_NAME$BINARY_EXT" --help 2>&1 || echo "Exit code: $?"
+            
+            # Add pdcurses DLL to PATH
+            export PATH="$PATH:$VCPKG_ROOT/installed/x64-windows/bin"
+            echo "Updated PATH with vcpkg bin directory"
+          fi
+          
+          ./zig-out/bin/$BINARY_NAME$BINARY_EXT --help
+          ./zig-out/bin/$BINARY_NAME$BINARY_EXT --version
+          ./zig-out/bin/$BINARY_NAME$BINARY_EXT hello
+          ./zig-out/bin/$BINARY_NAME$BINARY_EXT hello Alice
+          ./zig-out/bin/$BINARY_NAME$BINARY_EXT echo Hello World
+          ./zig-out/bin/$BINARY_NAME$BINARY_EXT info
+        shell: bash
+
+      - name: Build release binary
+        run: zig build -Doptimize=ReleaseSafe
+        timeout-minutes: 15
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4.3.1
+        with:
+          name: ${{ matrix.artifact_name }}-${{ github.run_number }}
+          path: |
+            zig-out/bin/${{ steps.extract_binary_name.outputs.binary_name }}
+            zig-out/bin/${{ steps.extract_binary_name.outputs.binary_name }}.exe
+          retention-days: 7
+
+  lint:
+    name: Lint and Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+
+      - name: Install static analysis tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format clang-tidy cppcheck
+        shell: bash
+
+      - name: Check formatting
+        run: zig fmt --check src/ test/
+        shell: bash
+
+      - name: Run clang-format check
+        run: |
+          find src -name "*.c" -o -name "*.h" | xargs clang-format --dry-run --Werror
+        shell: bash
+
+      - name: Run clang-tidy analysis
+        run: |
+          # Create compile_commands.json for clang-tidy
+          zig build -Doptimize=ReleaseSafe --verbose
+          find src -name "*.c" -o -name "*.h" | xargs clang-tidy --quiet
+        shell: bash
+
+      - name: Run cppcheck analysis
+        run: |
+          cppcheck --enable=all --inconclusive --std=c23 --platform=unix64 --suppress=unusedFunction src/
+        shell: bash
+
+  validate-template:
+    name: Validate Template
+    runs-on: ubuntu-latest
+    # Skip validation for the template repository itself
+    if: github.repository != 'sammyjoyce/c23-cli-template'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check for template placeholders
+        run: |
+          # Check for common template placeholders (excluding C23 attributes like [[nodiscard]])
+          PLACEHOLDERS_FOUND=$(find . -type f -not -path "./.git/*" -not -path "./zig-cache/*" -not -path "./zig-out/*" -not -path "./.github/workflows/*" \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" -o -name "*.txt" -o -name "*.zig" \) -exec grep -l "{{[^}]*}}\|<REPO_NAME>\|<REPO_OWNER>\|<PROJECT_NAME>" {} \; | wc -l)
+          
+          if [ "$PLACEHOLDERS_FOUND" -gt 0 ]; then
+            echo "❌ Template placeholders found in the following files:"
+            find . -type f -not -path "./.git/*" -not -path "./zig-cache/*" -not -path "./zig-out/*" -not -path "./.github/workflows/*" \( -name "*.md" -o -name "*.yml" -o -name "*.yaml" -o -name "*.json" -o -name "*.txt" -o -name "*.zig" \) -exec grep -l "{{[^}]*}}\|<REPO_NAME>\|<REPO_OWNER>\|<PROJECT_NAME>" {} \;
+            echo "Please replace all template placeholders before committing."
+            exit 1
+          else
+            echo "✅ No template placeholders found"
+          fi
+        shell: bash
+
+      - name: Check for template artifacts
+        run: |
+          # Check for common template artifacts that should be cleaned up
+          TEMPLATE_DIRS=".template"
+          TEMPLATE_FILES=".templatesyncignore USING_THIS_TEMPLATE.md"
+          
+          ARTIFACTS_FOUND=0
+          
+          # Check for template directories
+          for dir in $TEMPLATE_DIRS; do
+            if [ -d "$dir" ]; then
+              echo "❌ Template directory found: $dir"
+              ARTIFACTS_FOUND=$((ARTIFACTS_FOUND + 1))
+            fi
+          done
+          
+          # Check for template files
+          for file in $TEMPLATE_FILES; do
+            find . -type f -name "$file" -not -path "./.git/*" | while read -r f; do
+              echo "❌ Template file found: $f"
+              ARTIFACTS_FOUND=$((ARTIFACTS_FOUND + 1))
+            done
+          done
+          
+          if [ "$ARTIFACTS_FOUND" -gt 0 ]; then
+            echo "Please remove all template artifacts before committing."
+            exit 1
+          else
+            echo "✅ No template artifacts found"
+          fi
+        shell: bash
+
+  renovate-config:
+    name: Validate Renovate Config
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate renovate.json
+        uses: suzuki-shunsuke/github-action-renovate-config-validator@v1.0.0
+
+  pre-commit:
+    name: Run Pre-commit Hooks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+        shell: bash
+
+      - name: Install Node.js (for markdownlint)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+        shell: bash
+
+  coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+
+      - name: Run tests
+        run: |
+          zig build test
+        shell: bash
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: lcov.info
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+
+      - name: Install syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+        shell: bash
+
+      - name: Build project
+        run: |
+          zig build
+        shell: bash
+
+      - name: Generate SBOM
+        run: |
+          syft . --output spdx-json@2.3 > sbom.spdx.json
+        shell: bash
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  release:
+    name: Create Release
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4.1.7
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2.0.4
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
