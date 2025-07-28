@@ -12,8 +12,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "../utils/logging.h"
-#include "../utils/memory.h"
+#include "utils/logging.h"
+#include "utils/memory.h"
 
 // Forward declarations
 static app_error app_session_destroy_internal(app_session_manager_t *manager,

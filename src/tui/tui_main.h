@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include "../core/error.h"
+#include <core/error.h>
 
 // Forward declarations
 typedef struct tui_ncurses_t tui_ncurses_t;

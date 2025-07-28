@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../core/error.h"
-#include "../utils/logging.h"
-#include "../utils/memory.h"
+#include "core/error.h"
+#include "utils/logging.h"
+#include "utils/memory.h"
 
 #define MAX_COMMANDS 64
 

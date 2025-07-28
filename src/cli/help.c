@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../core/types.h"
-#include "../utils/colors.h"
-#include "../utils/logging.h"
+#include "core/types.h"
+#include "utils/colors.h"
+#include "utils/logging.h"
 
 void app_print_concise_help(const char *program_name) {
   if (program_name == nullptr || strlen(program_name) == 0) {
@@ -21,12 +21,13 @@ void app_print_concise_help(const char *program_name) {
          APP_VERSION);
 
   printf("Usage: %s [options] <noun> <verb> [arguments]\n\n", program_name);
+  printf("       %s [options]                 (launches multiplexer by default)\n\n", program_name);
 
   printf("Common commands:\n");
   printf("  accounts list    List all stored accounts\n");
   printf("  accounts add     Add new account\n");
   printf("  sessions start   Start new Claude session\n");
-  printf("  mux up           Launch multiplexer\n");
+  printf("  mux up           Launch multiplexer (default when run without args)\n");
   printf("\n");
 
   printf("Options:\n");
@@ -36,11 +37,10 @@ void app_print_concise_help(const char *program_name) {
   printf("  -q, --quiet     Suppress non-essential output\n\n");
 
   printf("Examples:\n");
-  printf("  $ %s hello\n", program_name);
-  printf("  Hello, World!\n\n");
-
-  printf("  $ %s hello Alice\n", program_name);
-  printf("  Hello, Alice!\n\n");
+  printf("  $ %s                        (launches multiplexer)\n", program_name);
+  printf("  $ %s accounts list\n", program_name);
+  printf("  $ %s sessions start\n", program_name);
+  printf("\n");
 
   printf("For more options, use %s --help\n", program_name);
 }

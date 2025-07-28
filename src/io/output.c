@@ -8,9 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../core/config.h"
-#include "../utils/colors.h"
-#include "../utils/logging.h"
+#include "core/config.h"
+#include "utils/colors.h"
+#include "utils/logging.h"
 
 void app_output(const char *text, const app_config_t *config, bool is_error) {
   if (text == nullptr || config == nullptr) {

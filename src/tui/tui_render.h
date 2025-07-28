@@ -4,9 +4,9 @@
 #include <stddef.h>
 #include <time.h>
 
-#include "../core/error.h"
-#include "../core/types.h"
-#include "tui_pane.h"
+#include <core/error.h>
+#include <core/types.h>
+#include "panes/tui_pane.h"
 
 // Forward declarations
 typedef struct app_tui_renderer app_tui_renderer_t;

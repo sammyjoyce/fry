@@ -12,7 +12,7 @@
 
 #include <stddef.h>
 
-#include "../core/types.h"
+#include "core/types.h"
 
 // Securely zero memory to prevent sensitive data recovery.
 // Uses volatile pointer to prevent compiler optimization from removing the

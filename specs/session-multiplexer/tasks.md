@@ -235,6 +235,16 @@ This document tracks the implementation status of the Session Multiplexer featur
   - [ ] 28.3. Implement account renaming functionality
   - [ ] 28.4. Add account export functionality
   - [ ] 28.5. Implement account removal with token cleanup
+  - [ ] 28.6. Implement interactive credential input for account addition
+    - [ ] 28.6.1. Add readline support for secure credential input
+    - [ ] 28.6.2. Implement password masking for sensitive input
+    - [ ] 28.6.3. Add input validation for JSON format
+    - References: cmd_accounts.c TODO, Requirement 1.3
+  - [ ] 28.7. Parse absolute time for account disable
+    - [ ] 28.7.1. Implement HH:MM time format parsing
+    - [ ] 28.7.2. Add validation for valid time ranges
+    - [ ] 28.7.3. Convert parsed time to proper timestamp
+    - References: cmd_accounts.c TODO, Requirement 1.4
   - References: Requirement 1.1, 1.2, 1.3, 1.4, 1.5, 1.6
 
 - [ ] 29. Session Switching Enhancement
@@ -250,6 +260,11 @@ This document tracks the implementation status of the Session Multiplexer featur
   - [ ] 30.3. Implement both Claude Pro/Max and API Key modes
   - [ ] 30.4. Add re-authentication prompt for token refresh failures
   - [ ] 30.5. Implement token expiration validation
+  - [ ] 30.6. Store and load default account preference
+    - [ ] 30.6.1. Implement default account preference storage
+    - [ ] 30.6.2. Add account enable/disable functionality
+    - [ ] 30.6.3. Load default account preference on startup
+    - References: oauth.c TODO, Requirement 3.1
   - References: Requirement 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7
 
 - [ ] 31. Session Management Enhancement
@@ -270,6 +285,10 @@ This document tracks the implementation status of the Session Multiplexer featur
   - [ ] 33.3. Implement dynamic pane resizing
   - [ ] 33.4. Add proportional layout reflow on terminal resize
   - [ ] 33.5. Implement 9-pane maximum limit
+  - [ ] 33.6. Free layout tree nodes and implement tree-based layouts
+    - [ ] 33.6.1. Implement proper layout tree node cleanup
+    - [ ] 33.6.2. Replace grid fallback with tree-based layouts
+    - References: tui_layout.c TODO, Requirement 6.6
   - References: Requirement 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
 
 - [ ] 34. Session Navigation Enhancement
@@ -287,6 +306,27 @@ This document tracks the implementation status of the Session Multiplexer featur
   - [ ] 35.3. Implement failed session restarting
   - [ ] 35.4. Add session detaching functionality
   - [ ] 35.5. Implement input broadcasting to all panes
+  - [ ] 35.6. Write PTY data to pane's terminal emulator
+    - [ ] 35.6.1. Implement actual PTY data writing to terminal emulator
+    - [ ] 35.6.2. Remove placeholder render marking
+    - References: tui_event.c TODO, Requirement 8.4
+  - [ ] 35.7. Implement proper terminal emulation and ANSI parsing for pane write
+    - [ ] 35.7.1. Replace line buffering with proper terminal emulation
+    - [ ] 35.7.2. Implement full ANSI escape sequence parsing
+    - References: tui_pane.c TODO, Requirement 8.4
+  - [ ] 35.8. Implement remaining PTY functions
+    - [ ] 35.8.1. Implement spawn function
+    - [ ] 35.8.2. Implement read function
+    - [ ] 35.8.3. Implement write function
+    - References: tui_pty.c TODO, Requirement 8.1
+  - [ ] 35.9. Get OAuth token/account from session manager in PTY spawn
+    - [ ] 35.9.1. Replace environment variable access with session manager
+    - [ ] 35.9.2. Implement proper OAuth token retrieval
+    - References: tui_pty_spawn.c TODO, Requirement 8.1
+  - [ ] 35.10. Handle various CSI modes and trigger bell in terminal emulator
+    - [ ] 35.10.1. Implement bell triggering functionality
+    - [ ] 35.10.2. Handle various terminal modes properly
+    - References: tui_term_emulator.c TODO, Requirement 8.4
   - References: Requirement 8.1, 8.2, 8.3, 8.4, 8.5, 8.6
 
 - [ ] 36. Account Integration Enhancement
@@ -314,6 +354,10 @@ This document tracks the implementation status of the Session Multiplexer featur
   - [ ] 38.4. Add command history maintenance
   - [ ] 38.5. Implement available commands display in command mode
   - [ ] 38.6. Add custom key bindings via configuration
+  - [ ] 38.7. Display completion options for command mode
+    - [ ] 38.7.1. Implement multiple completion options display
+    - [ ] 38.7.2. Add visual interface for completion selection
+    - References: tui_command.c TODO, Requirement 11.5
   - References: Requirement 11.1, 11.2, 11.3, 11.4, 11.5, 11.6
 
 - [ ] 39. Mouse Support Enhancement
@@ -339,6 +383,14 @@ This document tracks the implementation status of the Session Multiplexer featur
   - [ ] 41.3. Implement workspace restoration on launch
   - [ ] 41.4. Add pane-account association preservation
   - [ ] 41.5. Implement multiple named workspaces support
+  - [ ] 41.6. Track actual creation time and size weights in workspace save
+    - [ ] 41.6.1. Implement proper creation time tracking
+    - [ ] 41.6.2. Track actual size weights for panes
+    - References: tui_workspace.c TODO, Requirement 14.3
+  - [ ] 41.7. Restore working directory and reconnect session in workspace load
+    - [ ] 41.7.1. Implement working directory restoration
+    - [ ] 41.7.2. Add session reconnection functionality
+    - References: tui_workspace.c TODO, Requirement 14.3
   - References: Requirement 14.1, 14.2, 14.3, 14.4, 14.5, 14.6
 
 - [ ] 42. Configuration Management Enhancement
@@ -352,6 +404,10 @@ This document tracks the implementation status of the Session Multiplexer featur
   - [ ] 43.1. Implement exponential backoff retry logic for network failures
   - [ ] 43.2. Add user information and troubleshooting steps for Claude Code launch failures
   - [ ] 43.3. Implement graceful handling of interrupted sessions
+  - [ ] 43.4. Clean up array/object on parse error in JSON parser
+    - [ ] 43.4.1. Implement proper array cleanup on parse error
+    - [ ] 43.4.2. Implement proper object cleanup on parse error
+    - References: json.c TODO, Requirement 16.3
   - References: Requirement 16.1, 16.2, 16.3, 16.4, 16.5, 16.6
 
 - [ ] 44. Security Enhancement
@@ -360,4 +416,22 @@ This document tracks the implementation status of the Session Multiplexer featur
   - [ ] 44.3. Add secure random generation for PKCE verifiers and OAuth state parameters
   - [ ] 44.4. Implement SHA256 for PKCE code challenge generation
   - [ ] 44.5. Add OAuth state parameter validation to prevent CSRF attacks
+  - [ ] 44.6. Proper cleanup of mock keychain JSON storage
+    - [ ] 44.6.1. Keep reference to json_value_t for proper cleanup
+    - [ ] 44.6.2. Implement full cleanup of mock storage on keychain destruction
+    - References: keychain.c TODO, Requirement 17.2
   - References: Requirement 17.1, 17.2, 17.3, 17.4, 17.5, 17.6
+
+### Phase 8: TODO Resolution Tasks
+
+- [ ] 45. Implement interactive credential input for account addition
+  - [ ] 45.1. Add readline support for secure credential input
+  - [ ] 45.2. Implement password masking for sensitive input
+  - [ ] 45.3. Add input validation for JSON format
+  - References: cmd_accounts.c TODO, Requirement 1.3
+
+- [ ] 46. Parse absolute time for account disable
+  - [ ] 46.1. Implement HH:MM time format parsing
+  - [ ] 46.2. Add validation for valid time ranges
+  - [ ] 46.3. Convert parsed time to proper timestamp
+  - References: cmd_accounts.c TODO, Requirement 1.4

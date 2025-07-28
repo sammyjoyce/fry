@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../utils/logging.h"
-#include "../utils/memory.h"
+#include <utils/logging.h>
+#include <utils/memory.h>
 
 // Create layout manager
 app_error app_tui_layout_create(app_tui_layout_manager_t **manager,

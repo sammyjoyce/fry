@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../core/types.h"
+#include "core/types.h"
 
 // Forward declaration prevents circular dependency with config.h.
 // Allows output module to respect config settings without tight coupling.

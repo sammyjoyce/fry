@@ -12,9 +12,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../utils/json.h"
-#include "../utils/logging.h"
-#include "../utils/memory.h"
+#include "utils/json.h"
+#include "utils/logging.h"
+#include "utils/memory.h"
 
 #define MAX_COMMAND_ARGS 100
 

@@ -7,8 +7,8 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "../utils/logging.h"
-#include "../utils/memory.h"
+#include <utils/logging.h>
+#include <utils/memory.h>
 #include "tui.h"
 #include "tui_main.h"
 #include "tui_mux.h"

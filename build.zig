@@ -49,7 +49,7 @@ pub fn build(b: *std.Build) void {
         "src/main.c",
         "src/core/error.c",
         "src/core/config.c",
-        "src/core/oauth.c",
+        "src/core/auth/oauth.c",
         "src/core/session.c",
         "src/utils/logging.c",
         "src/utils/memory.c",
@@ -61,10 +61,10 @@ pub fn build(b: *std.Build) void {
         "src/cli/help.c",
         "src/cli/args.c",
         "src/cli/commands.c",
-        "src/cli/cmd_accounts.c",
-        "src/cli/cmd_auth.c",
-        "src/cli/cmd_stubs.c",
-        "src/cli/cmd_mux.c",
+        "src/cli/commands/cmd_accounts.c",
+        "src/cli/commands/cmd_auth.c",
+        "src/cli/commands/cmd_stubs.c",
+        "src/cli/commands/cmd_mux.c",
     };
 
     // Base flags
@@ -109,7 +109,7 @@ pub fn build(b: *std.Build) void {
         }
 
         exe.addCSourceFile(.{
-            .file = b.path("src/core/keychain_macos.c"),
+            .file = b.path("src/core/auth/keychain_macos.c"),
             .flags = flags.items,
         });
         flags.deinit();
@@ -130,7 +130,7 @@ pub fn build(b: *std.Build) void {
         }
 
         exe.addCSourceFile(.{
-            .file = b.path("src/core/keychain_linux.c"),
+            .file = b.path("src/core/auth/keychain_linux.c"),
             .flags = flags.items,
         });
         flags.deinit();
@@ -153,22 +153,22 @@ pub fn build(b: *std.Build) void {
         // TUI sources
         const tui_sources = [_][]const u8{
             "src/tui/tui.c",
-            "src/tui/tui_progress.c",
-            "src/tui/tui_ncurses.c",
-            "src/tui/tui_pane.c",
-            "src/tui/tui_pane_launch.c",
+            "src/tui/components/tui_progress.c",
+            "src/tui/backend/tui_ncurses.c",
+            "src/tui/panes/tui_pane.c",
+            "src/tui/panes/tui_pane_launch.c",
             "src/tui/tui_layout.c",
-            "src/tui/tui_pty.c",
-            "src/tui/tui_pty_spawn.c",
-            "src/tui/tui_mux.c",
-            "src/tui/tui_input.c",
+            "src/tui/pty/tui_pty.c",
+            "src/tui/pty/tui_pty_spawn.c",
+            "src/tui/mux/tui_mux.c",
+            "src/tui/components/tui_input.c",
             "src/tui/tui_render.c",
-            "src/tui/tui_mux_event.c",
-            "src/tui/tui_mux_nav.c",
-            "src/tui/tui_term_emulator.c",
+            "src/tui/mux/tui_mux_event.c",
+            "src/tui/mux/tui_mux_nav.c",
+            "src/tui/pty/tui_term_emulator.c",
             "src/tui/tui_workspace.c",
-            "src/tui/tui_command.c",
-            "src/core/keychain.c",
+            "src/tui/components/tui_command.c",
+            "src/core/auth/keychain.c",
         };
 
         for (tui_sources) |src| {

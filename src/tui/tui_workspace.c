@@ -7,12 +7,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "../utils/json.h"
-#include "../utils/logging.h"
-#include "../utils/memory.h"
-#include "tui_layout.h"
-#include "tui_mux.h"
-#include "tui_pane.h"
+#include <core/error.h>
+#include <utils/json.h>
+#include <utils/logging.h>
+#include <utils/memory.h>
+#include "tui/tui_layout.h"
+#include "tui/mux/tui_mux.h"
+#include "tui/panes/tui_pane.h"
 
 // Get default workspace path
 app_error app_tui_workspace_get_default_path(char *path, size_t size) {

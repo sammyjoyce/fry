@@ -6,10 +6,11 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "../utils/logging.h"
-#include "../utils/memory.h"
-#include "tui.h"
-#include "tui_ncurses.h"
+#include <core/error.h>
+#include <utils/logging.h>
+#include <utils/memory.h>
+#include "tui/tui.h"
+#include "tui/backend/tui_ncurses.h"
 
 // Helper to get current time in milliseconds
 static double get_time_ms(void) {

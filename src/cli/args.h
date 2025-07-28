@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "../core/error.h"
-#include "../core/types.h"
+#include "core/error.h"
+#include "core/types.h"
 
 // Forward declaration avoids circular dependency with config.h.
 // The parser updates config based on parsed arguments.

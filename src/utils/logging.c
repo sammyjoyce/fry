@@ -16,7 +16,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "../core/types.h"
+#include "core/types.h"
 
 // Global log level defaults to ERROR to minimize output in production
 // environments. Hook developers can increase verbosity via APP_LOG_LEVEL when

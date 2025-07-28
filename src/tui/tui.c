@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../utils/logging.h"
-#include "../utils/memory.h"
-#include "tui_ncurses.h"
+#include <utils/logging.h>
+#include <utils/memory.h>
+#include "tui/backend/tui_ncurses.h"
 
 static bool tui_initialized = false;
 static app_terminal_caps_t terminal_caps;

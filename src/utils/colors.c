@@ -8,7 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../core/config.h"
+#include "core/config.h"
 
 bool app_use_colors(const app_config_t *config) {
   // Command line flag takes precedence
