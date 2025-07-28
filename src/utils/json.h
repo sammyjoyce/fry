@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "../core/error.h"
+#include "core/error.h"
 
 typedef enum {
   JSON_TYPE_NULL,

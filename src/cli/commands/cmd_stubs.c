@@ -5,14 +5,14 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "cli/commands.h"
+#include "core/auth/keychain.h"
+#include "core/auth/oauth.h"
 #include "core/config.h"
 #include "core/error.h"
-#include "core/keychain.h"
-#include "../core/oauth.h"
-#include "../core/session.h"
-#include "../utils/logging.h"
-#include "../utils/memory.h"
-#include "commands.h"
+#include "core/session.h"
+#include "utils/logging.h"
+#include "utils/memory.h"
 
 // Session command stubs
 app_error cmd_sessions_list(int argc, char **argv, app_config_t *config) {

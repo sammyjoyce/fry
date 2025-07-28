@@ -16,8 +16,8 @@
 #include "cli/args.h"
 #include "cli/commands.h"
 #include "cli/help.h"
-#include <core/config.h>
-#include <core/error.h>
+#include "core/config.h"
+#include "core/error.h"
 #include <core/auth/oauth.h>
 #include <core/types.h>
 #include "io/input.h"

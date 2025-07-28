@@ -6,11 +6,11 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-
 #include <utils/logging.h>
 #include <utils/memory.h>
-#include "tui.h"
-#include "tui_term_emulator.h"
+
+#include "tui/pty/tui_term_emulator.h"
+#include "tui/tui.h"
 
 // Create pane manager
 app_error app_tui_pane_manager_create(app_tui_pane_manager_t **manager,
