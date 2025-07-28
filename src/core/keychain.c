@@ -10,13 +10,13 @@
 // Platform-specific function declarations
 #ifdef __APPLE__
 // Forward declarations for macOS implementation
-app_error keychain_macos_store_token(const char *account_id,
-                                     const app_oauth_token_t *token);
-app_error keychain_macos_retrieve_token(const char *account_id,
-                                        app_oauth_token_t **token);
-app_error keychain_macos_delete_token(const char *account_id);
-app_error keychain_macos_list_accounts(char ***account_ids, size_t *count);
-app_error keychain_macos_has_token(const char *account_id, bool *exists);
+app_error keychain_store_token(const char *account_id,
+                               const app_oauth_token_t *token);
+app_error keychain_retrieve_token(const char *account_id,
+                                  app_oauth_token_t **token);
+app_error keychain_delete_token(const char *account_id);
+app_error keychain_list_accounts(char ***account_ids, size_t *count);
+app_error keychain_has_token(const char *account_id, bool *exists);
 #endif
 
 #ifdef __linux__
@@ -353,7 +353,7 @@ app_error app_keychain_store_token(app_keychain_t *keychain,
 
 #ifdef __APPLE__
   if (keychain->use_macos_keychain) {
-    app_error err = keychain_macos_store_token(account_id, token);
+    app_error err = keychain_store_token(account_id, token);
 
     // If we get permission errors on macOS, fall back to mock
     if (err == APP_ERROR_KEYCHAIN_ACCESS_DENIED) {
@@ -402,7 +402,7 @@ app_error app_keychain_retrieve_token(app_keychain_t *keychain,
 
 #ifdef __APPLE__
   if (keychain->use_macos_keychain) {
-    return keychain_macos_retrieve_token(account_id, token);
+    return keychain_retrieve_token(account_id, token);
   }
 #endif
 
@@ -430,7 +430,7 @@ app_error app_keychain_delete_token(app_keychain_t *keychain,
 
 #ifdef __APPLE__
   if (keychain->use_macos_keychain) {
-    return keychain_macos_delete_token(account_id);
+    return keychain_delete_token(account_id);
   }
 #endif
 
@@ -458,7 +458,7 @@ app_error app_keychain_list_accounts(app_keychain_t *keychain,
 
 #ifdef __APPLE__
   if (keychain->use_macos_keychain) {
-    return keychain_macos_list_accounts(account_ids, count);
+    return keychain_list_accounts(account_ids, count);
   }
 #endif
 
@@ -486,7 +486,7 @@ app_error app_keychain_has_token(app_keychain_t *keychain,
 
 #ifdef __APPLE__
   if (keychain->use_macos_keychain) {
-    return keychain_macos_has_token(account_id, exists);
+    return keychain_has_token(account_id, exists);
   }
 #endif
 

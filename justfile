@@ -30,31 +30,31 @@ test-fast:
 
 # Build and run TUI tests
 test-tui:
-    cd test && make -f Makefile test
+    just --justfile test/justfile test
 
 # Run specific TUI test suite
 test-tui-ncurses:
-    cd test && make -f Makefile ncurses
+    just --justfile test/justfile ncurses
 
 test-tui-pane:
-    cd test && make -f Makefile pane
+    just --justfile test/justfile pane
 
 test-tui-layout:
-    cd test && make -f Makefile layout
+    just --justfile test/justfile layout
 
 test-tui-pty:
-    cd test && make -f Makefile pty
+    just --justfile test/justfile pty
 
 test-tui-mux:
-    cd test && make -f Makefile mux
+    just --justfile test/justfile mux
 
 # Build TUI tests without running
 build-tui-tests:
-    cd test && make -f Makefile all
+    just --justfile test/justfile all
 
 # Clean TUI test artifacts
 clean-tui-tests:
-    cd test && make -f Makefile clean
+    just --justfile test/justfile clean
 
 # Check code formatting
 fmt:

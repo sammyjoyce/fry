@@ -11,8 +11,8 @@
  * @brief Platform-agnostic keychain interface for secure token storage
  *
  * This module provides a unified interface for storing OAuth tokens securely
- * across different platforms (macOS Keychain, Linux Secret Service, Windows
- * Credential Manager).
+ * across different platforms (macOS Keychain, Linux Secret Service).
+ * Windows is not currently supported.
  *
  * Example usage:
  * @code

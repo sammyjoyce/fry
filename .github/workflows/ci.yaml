@@ -27,14 +27,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         include:
           - os: ubuntu-latest
             artifact_name: fry-linux
           - os: macos-latest
             artifact_name: fry-macos
-          - os: windows-latest
-            artifact_name: fry-windows
 
     runs-on: ${{ matrix.os }}
 
@@ -85,23 +83,7 @@ jobs:
           fi
         shell: bash
 
-      - name: Install pdcurses (Windows)
-        if: matrix.os == 'windows-latest'
-        run: |
-          # Install vcpkg
-          git clone https://github.com/Microsoft/vcpkg.git
-          cd vcpkg
-          ./bootstrap-vcpkg.bat
-          ./vcpkg integrate install
-          
-          # Install pdcurses
-          ./vcpkg install pdcurses:x64-windows
-          echo "VCPKG_ROOT=$(pwd)" >> $GITHUB_ENV
-          # Also set library paths for Windows
-          echo "LIB=$LIB;$(pwd)/installed/x64-windows/lib" >> $GITHUB_ENV
-          echo "INCLUDE=$INCLUDE;$(pwd)/installed/x64-windows/include" >> $GITHUB_ENV
-          cd ..
-        shell: bash
+
 
       - name: Run `install` step
         run: zig build install
@@ -120,11 +102,8 @@ jobs:
 
       - name: Test binary functionality
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            BINARY_EXT=".exe"
-          else
-            BINARY_EXT=""
-          fi
+          # Windows is not currently supported
+          BINARY_EXT=""
           
           # Debug: List contents of zig-out/bin
           echo "Contents of zig-out/bin:"
@@ -136,16 +115,7 @@ jobs:
             exit 1
           fi
           
-          # On Windows, check for DLL dependencies
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            echo "Checking binary dependencies:"
-            # Try to run with full path to see actual error
-            "./zig-out/bin/$BINARY_NAME$BINARY_EXT" --help 2>&1 || echo "Exit code: $?"
-            
-            # Add pdcurses DLL to PATH
-            export PATH="$PATH:$VCPKG_ROOT/installed/x64-windows/bin"
-            echo "Updated PATH with vcpkg bin directory"
-          fi
+
           
           ./zig-out/bin/$BINARY_NAME$BINARY_EXT --help
           ./zig-out/bin/$BINARY_NAME$BINARY_EXT --version
@@ -166,7 +136,6 @@ jobs:
           name: ${{ matrix.artifact_name }}-${{ github.run_number }}
           path: |
             zig-out/bin/${{ steps.extract_binary_name.outputs.binary_name }}
-            zig-out/bin/${{ steps.extract_binary_name.outputs.binary_name }}.exe
           retention-days: 7
 
   lint:

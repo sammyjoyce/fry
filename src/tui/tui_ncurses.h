@@ -1,13 +1,8 @@
 #pragma once
 
+#include <ncurses.h>
 #include <stdbool.h>
 #include <stddef.h>
-
-#ifdef _WIN32
-#include <curses.h>
-#else
-#include <ncurses.h>
-#endif
 
 #include "../core/error.h"
 #include "../core/types.h"
@@ -40,6 +35,7 @@ typedef struct {
   int (*mvwprintw)(WINDOW *, int, int, const char *, ...);
   int (*mvwaddch)(WINDOW *, int, int, chtype);
   int (*wmove)(WINDOW *, int, int);
+  int (*waddch)(WINDOW *, chtype);
   int (*waddnstr)(WINDOW *, const char *, int);
   int (*wattr_on)(WINDOW *, attr_t, void *);
   int (*wattr_off)(WINDOW *, attr_t, void *);
@@ -81,6 +77,9 @@ typedef struct {
 
 // Global NCurses vtable
 extern app_ncurses_vtable_t *g_ncurses;
+
+// Get standard screen window
+WINDOW *app_ncurses_stdscr(void);
 
 // Helper macros for common operations
 #define NC_WATTRON(win, attr) g_ncurses->wattr_on(win, (attr_t)(attr), NULL)

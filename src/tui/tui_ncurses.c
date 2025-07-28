@@ -11,6 +11,18 @@
 // Global NCurses vtable
 app_ncurses_vtable_t *g_ncurses = NULL;
 
+// Get standard screen window
+WINDOW *app_ncurses_stdscr(void) {
+#ifdef ENABLE_TUI_TESTS
+  // Forward declaration for mock terminal
+  extern app_mock_terminal_t *g_mock_terminal;
+  if (g_mock_terminal) {
+    return (WINDOW *)g_mock_terminal->stdscr;
+  }
+#endif
+  return stdscr;
+}
+
 // Real NCurses vtable
 static app_ncurses_vtable_t real_ncurses = {
     // Initialization
@@ -35,6 +47,7 @@ static app_ncurses_vtable_t real_ncurses = {
     .mvwprintw = mvwprintw,
     .mvwaddch = mvwaddch,
     .wmove = wmove,
+    .waddch = waddch,
     .waddnstr = waddnstr,
     .wattr_on = wattr_on,
     .wattr_off = wattr_off,
@@ -204,7 +217,8 @@ app_error app_ncurses_get_fallback_mode(const app_terminal_caps_t *caps,
 
 // Mock implementations for testing
 
-static app_mock_terminal_t *g_mock_terminal = NULL;
+// Global mock terminal for testing
+app_mock_terminal_t *g_mock_terminal = NULL;
 
 // Mock initscr
 static WINDOW *mock_initscr(void) {
@@ -323,20 +337,20 @@ static bool mock_has_colors(void) {
 }
 
 // Mock getmaxx
-static int mock_getmaxx(WINDOW *win) {
+static int mock_getmaxx(const WINDOW *win) {
   if (!win) {
     return g_mock_terminal ? g_mock_terminal->width : 80;
   }
-  mock_window_t *mwin = (mock_window_t *)win;
+  const mock_window_t *mwin = (const mock_window_t *)win;
   return mwin->width;
 }
 
 // Mock getmaxy
-static int mock_getmaxy(WINDOW *win) {
+static int mock_getmaxy(const WINDOW *win) {
   if (!win) {
     return g_mock_terminal ? g_mock_terminal->height : 24;
   }
-  mock_window_t *mwin = (mock_window_t *)win;
+  const mock_window_t *mwin = (const mock_window_t *)win;
   return mwin->height;
 }
 
@@ -372,6 +386,7 @@ static int mock_mvwprintw(WINDOW *win, int y, int x, const char *fmt, ...) {
 
 // Mock NCurses vtable
 static app_ncurses_vtable_t mock_ncurses = {
+    // Initialization
     .initscr = mock_initscr,
     .endwin = mock_endwin,
     .cbreak = (int (*)(void))mock_endwin,            // Stub
@@ -381,41 +396,52 @@ static app_ncurses_vtable_t mock_ncurses = {
     .keypad = (int (*)(WINDOW *, bool))mock_delwin,  // Stub
     .curs_set = (int (*)(int))mock_getch,            // Stub
 
+    // Window operations
     .newwin = mock_newwin,
     .delwin = mock_delwin,
     .wrefresh = mock_delwin,                                // Stub
     .wclear = mock_delwin,                                  // Stub
     .box = (int (*)(WINDOW *, chtype, chtype))mock_delwin,  // Stub
+    .wborder = NULL,                                        // Stub
 
+    // Output operations
     .mvwprintw = mock_mvwprintw,
     .mvwaddch = (int (*)(WINDOW *, int, int, chtype))mock_delwin,  // Stub
-    .mvwaddnstr =
-        (int (*)(WINDOW *, int, int, const char *, int))mock_delwin,  // Stub
-    .wattron = mock_delwin,                                           // Stub
-    .wattroff = mock_delwin,                                          // Stub
+    .wmove = NULL,                                                 // Stub
+    .waddch = NULL,                                                // Stub
+    .waddnstr = NULL,                                              // Stub
+    .wattr_on = NULL,                                              // Stub
+    .wattr_off = NULL,                                             // Stub
 
+    // Input operations
     .getch = mock_getch,
     .wgetch = (int (*)(WINDOW *))mock_getch,                  // Stub
     .wgetnstr = (int (*)(WINDOW *, char *, int))mock_delwin,  // Stub
 
+    // Screen info
     .getmaxx = mock_getmaxx,
     .getmaxy = mock_getmaxy,
 
+    // Color support
     .has_colors = mock_has_colors,
     .start_color = (int (*)(void))mock_endwin,               // Stub
     .use_default_colors = (int (*)(void))mock_endwin,        // Stub
     .init_pair = (int (*)(short, short, short))mock_endwin,  // Stub
 
+    // Mouse support
     .mousemask = (mmask_t (*)(mmask_t, mmask_t *))mock_endwin,  // Stub
     .getmouse = (int (*)(MEVENT *))mock_endwin,                 // Stub
 
+    // Misc
     .beep = (int (*)(void))mock_endwin,     // Stub
     .flash = (int (*)(void))mock_endwin,    // Stub
     .napms = (int (*)(int))mock_getch,      // Stub
     .clear = (int (*)(void))mock_endwin,    // Stub
     .refresh = (int (*)(void))mock_endwin,  // Stub
     .touchwin = mock_delwin,                // Stub
+    .wtouchln = NULL,                       // Stub
 
+    // Attributes
     .attron = (int (*)(int))mock_getch,                                // Stub
     .attroff = (int (*)(int))mock_getch,                               // Stub
     .mvprintw = (int (*)(int, int, const char *, ...))mock_mvwprintw,  // Stub

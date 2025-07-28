@@ -23,10 +23,13 @@ typedef enum {
 
 // Input modes
 typedef enum {
-  INPUT_MODE_NORMAL,   // Normal input to focused pane
-  INPUT_MODE_COMMAND,  // Command line input
+  INPUT_MODE_NORMAL,   // Normal mode (navigation)
+  INPUT_MODE_COMMAND,  // Command mode (typing commands)
+  INPUT_MODE_INSERT,   // Insert mode (typing in pane)
+  INPUT_MODE_RESIZE,   // Resize mode
+  INPUT_MODE_WINDOW,   // Window command mode (after Ctrl-W)
   INPUT_MODE_SEARCH,   // Search mode
-  INPUT_MODE_VISUAL    // Visual selection mode
+  INPUT_MODE_VISUAL,   // Visual selection mode
 } app_input_mode_t;
 
 // Command history
@@ -37,12 +40,12 @@ typedef struct {
   size_t current;   // Current position in history
 } app_command_history_t;
 
-// Keybinding
+// Mux-specific keybinding (different from input system keybinding)
 typedef struct {
   int key;              // Key code
   int modifiers;        // Modifier keys (Ctrl, Alt, etc.)
   const char *command;  // Command to execute
-} app_keybinding_t;
+} app_mux_keybinding_t;
 
 // Multiplexer configuration
 typedef struct {
@@ -56,10 +59,16 @@ typedef struct {
   int min_pane_width;   // Minimum pane width
   int min_pane_height;  // Minimum pane height
 
+  // Navigation options
+  bool wrap_navigation;  // Wrap around when navigating past edges
+
   // Keybindings
-  app_keybinding_t *keybindings;  // Array of keybindings
-  size_t keybinding_count;        // Number of keybindings
+  app_mux_keybinding_t *keybindings;  // Array of keybindings
+  size_t keybinding_count;            // Number of keybindings
 } app_tui_mux_config_t;
+
+// Forward declaration
+typedef struct app_tui_input app_tui_input_t;
 
 // Multiplexer structure
 struct app_tui_mux {
@@ -72,6 +81,7 @@ struct app_tui_mux {
   app_tui_pane_manager_t *pane_manager;      // Pane manager
   app_tui_layout_manager_t *layout_manager;  // Layout manager
   app_session_manager_t *session_manager;    // Session manager
+  app_tui_input_t *input_system;             // Input system
 
   // UI elements
   WINDOW *status_bar;    // Status bar window
@@ -103,6 +113,9 @@ APP_NODISCARD app_error app_tui_mux_init(app_tui_mux_t *mux);
 
 APP_NODISCARD app_error app_tui_mux_run(app_tui_mux_t *mux);
 
+// Enhanced event loop with better timing and PTY monitoring
+APP_NODISCARD app_error app_tui_mux_run_enhanced(app_tui_mux_t *mux);
+
 APP_NODISCARD app_error app_tui_mux_shutdown(app_tui_mux_t *mux);
 
 // Pane operations
@@ -125,6 +138,13 @@ APP_NODISCARD app_error app_tui_mux_focus_direction(app_tui_mux_t *mux, int dx,
 
 APP_NODISCARD app_error app_tui_mux_focus_number(app_tui_mux_t *mux,
                                                  int number);
+
+APP_NODISCARD app_error app_tui_mux_cycle_focus(app_tui_mux_t *mux,
+                                                bool reverse);
+
+APP_NODISCARD app_error app_tui_mux_focus_last(app_tui_mux_t *mux);
+
+APP_NODISCARD app_error app_tui_mux_register_nav_keys(app_tui_mux_t *mux);
 
 // Layout operations
 APP_NODISCARD app_error app_tui_mux_set_layout(app_tui_mux_t *mux,

@@ -19,6 +19,7 @@ static const test_suite_t test_suites[] = {
     {"layout", "./test_tui_layout", "Layout management tests"},
     {"pty", "./test_tui_pty", "PTY functionality tests"},
     {"mux", "./test_tui_mux", "Multiplexer tests"},
+    {"render", "./test_tui_render", "Render engine tests"},
     {"integration", "./test_tui", "Integration tests"},
 };
 

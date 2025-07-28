@@ -5,18 +5,12 @@
 #include "config.h"
 
 #include <limits.h>
-#ifndef _WIN32
 #include <pwd.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#else
-#include <io.h>
-#define R_OK 4
-#define access _access
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "../utils/json.h"
 #include "../utils/logging.h"
@@ -107,16 +101,6 @@ static char *find_config_file(void) {
   }
 
   // Try user config directory
-#ifdef _WIN32
-  const char *home = getenv("USERPROFILE");
-  if (home) {
-    snprintf(config_path, PATH_MAX, "%s\\AppData\\Local\\%s\\config.json", home,
-             APP_NAME);
-    if (access(config_path, R_OK) == 0) {
-      return strdup(config_path);
-    }
-  }
-#else
   const char *home = getenv("HOME");
   if (home) {
     // Check .fry directory first
@@ -132,14 +116,9 @@ static char *find_config_file(void) {
       return strdup(config_path);
     }
   }
-#endif
 
   // Try system config directory
-#ifdef _WIN32
-  snprintf(config_path, PATH_MAX, "C:\\ProgramData\\%s\\config.json", APP_NAME);
-#else
   snprintf(config_path, PATH_MAX, "/etc/%s/config.json", APP_NAME);
-#endif
   if (access(config_path, R_OK) == 0) {
     return strdup(config_path);
   }
@@ -437,33 +416,68 @@ app_error app_config_save(const app_config_t *config) {
   json_object_t *obj = root->object_val;
 
   // Add basic settings
-  json_object_set(obj, "log_level",
-                  json_value_string(config->debug ? "debug" : "info"));
-  json_object_set(obj, "default_account",
-                  json_value_string(
-                      config->default_account ? config->default_account : ""));
+  if (json_object_set(obj, "log_level",
+                      json_value_string(config->debug ? "debug" : "info")) != 0) {
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
+  if (json_object_set(obj, "default_account",
+                      json_value_string(
+                          config->default_account ? config->default_account : "")) != 0) {
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
 
   // Add OAuth settings
   json_value_t *oauth = json_value_object();
-  json_object_set(
-      oauth->object_val, "token_endpoint",
-      json_value_string("https://console.anthropic.com/v1/oauth/token"));
-  json_object_set(
-      oauth->object_val, "auth_endpoint",
-      json_value_string("https://console.anthropic.com/oauth/authorize"));
-  json_object_set(
-      oauth->object_val, "redirect_uri",
-      json_value_string("https://console.anthropic.com/oauth/code/callback"));
-  json_object_set(obj, "oauth", oauth);
+  if (json_object_set(oauth->object_val, "token_endpoint",
+                      json_value_string("https://console.anthropic.com/v1/oauth/token")) != 0) {
+    json_value_destroy(oauth);
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
+  if (json_object_set(oauth->object_val, "auth_endpoint",
+                      json_value_string("https://console.anthropic.com/oauth/authorize")) != 0) {
+    json_value_destroy(oauth);
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
+  if (json_object_set(oauth->object_val, "redirect_uri",
+                      json_value_string("https://console.anthropic.com/oauth/code/callback")) != 0) {
+    json_value_destroy(oauth);
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
+  if (json_object_set(obj, "oauth", oauth) != 0) {
+    json_value_destroy(oauth);
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
 
   // Add multiplex settings
   json_value_t *multiplex = json_value_object();
-  json_object_set(multiplex->object_val, "max_instances", json_value_number(5));
-  json_object_set(multiplex->object_val, "default_layout",
-                  json_value_string("grid"));
-  json_object_set(multiplex->object_val, "auto_rotate_on_quota",
-                  json_value_bool(true));
-  json_object_set(obj, "multiplex", multiplex);
+  if (json_object_set(multiplex->object_val, "max_instances", json_value_number(5)) != 0) {
+    json_value_destroy(multiplex);
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
+  if (json_object_set(multiplex->object_val, "default_layout",
+                      json_value_string("grid")) != 0) {
+    json_value_destroy(multiplex);
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
+  if (json_object_set(multiplex->object_val, "auto_rotate_on_quota",
+                      json_value_bool(true)) != 0) {
+    json_value_destroy(multiplex);
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
+  if (json_object_set(obj, "multiplex", multiplex) != 0) {
+    json_value_destroy(multiplex);
+    json_value_destroy(root);
+    return APP_ERROR_PARSE;
+  }
 
   // Serialize to JSON
   char *json_str;

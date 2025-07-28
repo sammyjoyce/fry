@@ -1,6 +1,5 @@
 #include "tui_layout.h"
 
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,7 +135,10 @@ app_error app_tui_layout_arrange_grid(app_tui_layout_manager_t *manager,
                                   .width = current_width,
                                   .height = current_height};
 
-      app_tui_pane_resize(panes[pane_idx], &geometry);
+      app_error err = app_tui_pane_resize(panes[pane_idx], &geometry);
+      if (err != APP_SUCCESS) {
+        return err;
+      }
 
       x_offset += current_width;
       pane_idx++;
@@ -223,7 +225,10 @@ app_error app_tui_layout_calculate(app_tui_layout_manager_t *manager,
       // Find focused pane
       for (size_t i = 0; i < pane_count; i++) {
         if (panes[i]->has_focus) {
-          app_tui_pane_resize(panes[i], &fullscreen);
+          app_error err = app_tui_pane_resize(panes[i], &fullscreen);
+          if (err != APP_SUCCESS) {
+            return err;
+          }
           break;
         }
       }
@@ -250,8 +255,26 @@ app_error app_tui_layout_apply(app_tui_layout_manager_t *manager,
 
   // Apply to NCurses windows
   for (size_t i = 0; i < pane_count; i++) {
-    app_tui_pane_refresh(panes[i]);
+    app_error err = app_tui_pane_refresh(panes[i]);
+    if (err != APP_SUCCESS) {
+      return err;
+    }
   }
 
   return APP_SUCCESS;
+}
+
+// Get grid dimensions
+void app_tui_layout_get_grid_dimensions(app_tui_layout_manager_t *manager,
+                                        int *rows, int *cols) {
+  if (!manager || !rows || !cols) {
+    if (rows)
+      *rows = 1;
+    if (cols)
+      *cols = 1;
+    return;
+  }
+
+  *rows = manager->grid_rows;
+  *cols = manager->grid_cols;
 }

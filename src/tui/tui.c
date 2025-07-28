@@ -222,6 +222,48 @@ void tui_clear_window(tui_window_t *window) {
   }
 }
 
+void tui_draw_box(tui_window_t *window, int y, int x, int height, int width) {
+  if (!window || !window->win) {
+    return;
+  }
+
+  WINDOW *win = window->win;
+
+  // Draw corners
+  g_ncurses->wmove(win, y, x);
+  g_ncurses->waddch(win, ACS_ULCORNER);
+  g_ncurses->wmove(win, y, x + width - 1);
+  g_ncurses->waddch(win, ACS_URCORNER);
+  g_ncurses->wmove(win, y + height - 1, x);
+  g_ncurses->waddch(win, ACS_LLCORNER);
+  g_ncurses->wmove(win, y + height - 1, x + width - 1);
+  g_ncurses->waddch(win, ACS_LRCORNER);
+
+  // Draw horizontal lines
+  for (int i = 1; i < width - 1; i++) {
+    g_ncurses->wmove(win, y, x + i);
+    g_ncurses->waddch(win, ACS_HLINE);
+    g_ncurses->wmove(win, y + height - 1, x + i);
+    g_ncurses->waddch(win, ACS_HLINE);
+  }
+
+  // Draw vertical lines
+  for (int i = 1; i < height - 1; i++) {
+    g_ncurses->wmove(win, y + i, x);
+    g_ncurses->waddch(win, ACS_VLINE);
+    g_ncurses->wmove(win, y + i, x + width - 1);
+    g_ncurses->waddch(win, ACS_VLINE);
+  }
+}
+
+void tui_mvprint(tui_window_t *window, int y, int x, const char *text) {
+  if (!window || !window->win || !text) {
+    return;
+  }
+
+  g_ncurses->mvwprintw(window->win, y, x, "%s", text);
+}
+
 void tui_print_centered(WINDOW *win, int y, const char *text) {
   if (!win || !text) {
     return;
@@ -447,10 +489,10 @@ void tui_show_message(const char *title, const char *message) {
   NC_WATTROFF(window->win, COLOR_PAIR(TUI_COLOR_INFO));
 
   tui_refresh_window(window);
-  tui_get_char();
+  (void)tui_get_char();
 
   tui_destroy_window(window);
-  NC_TOUCHWIN(stdscr);
+  NC_TOUCHWIN(app_ncurses_stdscr());
   g_ncurses->refresh();
 }
 
@@ -505,7 +547,7 @@ bool tui_confirm(const char *title, const char *question) {
   }
 
   tui_destroy_window(window);
-  NC_TOUCHWIN(stdscr);
+  NC_TOUCHWIN(app_ncurses_stdscr());
   g_ncurses->refresh();
   return result;
 }
@@ -549,17 +591,21 @@ app_error tui_input_dialog(const char *title, const char *prompt, char *buffer,
   app_error result = tui_get_string(window->win, buffer, size, NULL);
 
   tui_destroy_window(window);
-  NC_TOUCHWIN(stdscr);
+  NC_TOUCHWIN(app_ncurses_stdscr());
   g_ncurses->refresh();
   return result;
 }
 
-void tui_g_ncurses->beep(void) {
-  g_ncurses->beep();
+void tui_beep(void) {
+  if (g_ncurses && g_ncurses->beep) {
+    g_ncurses->beep();
+  }
 }
 
-void tui_g_ncurses->flash(void) {
-  g_ncurses->flash();
+void tui_flash(void) {
+  if (g_ncurses && g_ncurses->flash) {
+    g_ncurses->flash();
+  }
 }
 
 int tui_get_max_x(void) {

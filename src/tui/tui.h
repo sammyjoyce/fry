@@ -4,11 +4,7 @@
 
 #pragma once
 
-#ifdef _WIN32
-#include <curses.h>
-#else
 #include <ncurses.h>
-#endif
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -31,6 +27,7 @@ typedef enum {
   TUI_COLOR_MENU_SELECTED,
   TUI_COLOR_MENU_NORMAL,
   TUI_COLOR_BORDER,
+  TUI_COLOR_FOCUSED_BORDER,
   TUI_COLOR_TITLE,
   TUI_COLOR_MAX
 } tui_color_pair_t;
@@ -68,9 +65,11 @@ APP_NODISCARD tui_window_t *tui_create_window(int height, int width, int y,
                                               int x);
 void tui_destroy_window(tui_window_t *window);
 void tui_draw_border(tui_window_t *window);
+void tui_draw_box(tui_window_t *window, int y, int x, int height, int width);
 void tui_set_window_title(tui_window_t *window, const char *title);
 void tui_refresh_window(tui_window_t *window);
 void tui_clear_window(tui_window_t *window);
+void tui_mvprint(tui_window_t *window, int y, int x, const char *text);
 
 // Text helpers
 void tui_print_centered(WINDOW *win, int y, const char *text);
@@ -100,3 +99,20 @@ int tui_get_max_y(void);
 
 // Progress API is declared in a dedicated header to keep tui.h lean.
 #include "tui_progress.h"
+
+// Forward declarations for multiplexer components
+typedef struct tui_t tui_t;
+typedef struct tui_ncurses_t tui_ncurses_t;
+typedef struct tui_mux_t tui_mux_t;
+
+// Get NCurses abstraction from TUI
+tui_ncurses_t *tui_get_ncurses(tui_t *tui);
+
+// Get multiplexer from TUI
+tui_mux_t *tui_get_mux(tui_t *tui);
+
+// Handle input key
+void tui_handle_input(tui_t *tui, int key);
+
+// Handle terminal resize
+void tui_handle_resize(tui_t *tui, int width, int height);

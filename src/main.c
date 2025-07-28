@@ -6,15 +6,12 @@
  * with proper error handling, configuration management, and testing support.
  */
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#ifndef _WIN32
-#include <signal.h>
 #include <unistd.h>
-#endif
 
 #include "cli/args.h"
 #include "cli/commands.h"

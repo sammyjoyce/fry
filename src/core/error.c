@@ -65,6 +65,12 @@ const char *app_strerror(app_error error_code) {
     return "Numeric underflow";
   case APP_ERROR_OUT_OF_RANGE:
     return "Value out of range";
+  case APP_ERROR_FILE_OPEN:
+    return "Failed to open file";
+  case APP_ERROR_FILE_WRITE:
+    return "Failed to write to file";
+  case APP_ERROR_FILE_READ:
+    return "Failed to read from file";
 
   // OAuth/Authentication errors
   case APP_ERROR_INVALID_TOKEN:
@@ -123,6 +129,22 @@ const char *app_strerror(app_error error_code) {
     return "Rate limited";
   case APP_ERROR_API:
     return "API error";
+
+  // I/O and timing errors
+  case APP_ERROR_TIMEOUT:
+    return "Operation timed out";
+  case APP_ERROR_EOF:
+    return "End of file reached";
+  case APP_ERROR_RETRY:
+    return "Operation should be retried";
+  case APP_ERROR_INCOMPLETE:
+    return "Incomplete data";
+  case APP_ERROR_SYSTEM:
+    return "System error";
+  case APP_ERROR_BUFFER_TOO_SMALL:
+    return "Buffer too small";
+  case APP_ERROR_USAGE:
+    return "Usage error";
 
   default:
     return "Unknown error";

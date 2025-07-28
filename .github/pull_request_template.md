@@ -21,7 +21,6 @@ Closes #(issue number)
 - [ ] Added new tests for changes
 - [ ] Tested on Linux
 - [ ] Tested on macOS
-- [ ] Tested on Windows
 - [ ] Manual testing completed
 
 ### Test Results

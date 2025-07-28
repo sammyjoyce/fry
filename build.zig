@@ -24,8 +24,8 @@ pub fn build(b: *std.Build) void {
     };
 
     // Build options
-    // Build options – TUI disabled by default so fresh clones build everywhere
-    const enable_tui = b.option(bool, "enable-tui", "Enable TUI support with ncurses (default: false)") orelse false;
+    // Build options – TUI enabled by default
+    const enable_tui = b.option(bool, "enable-tui", "Enable TUI support with ncurses (default: true)") orelse true;
     const ncurses_prefix = b.option([]const u8, "ncurses-prefix", "Override ncurses prefix (e.g. /usr/local/opt/ncurses)");
 
     const aro_dep = b.dependency("aro", .{
@@ -50,7 +50,6 @@ pub fn build(b: *std.Build) void {
         "src/core/error.c",
         "src/core/config.c",
         "src/core/oauth.c",
-        "src/core/keychain.c",
         "src/core/session.c",
         "src/utils/logging.c",
         "src/utils/memory.c",
@@ -65,6 +64,7 @@ pub fn build(b: *std.Build) void {
         "src/cli/cmd_accounts.c",
         "src/cli/cmd_auth.c",
         "src/cli/cmd_stubs.c",
+        "src/cli/cmd_mux.c",
     };
 
     // Base flags
@@ -75,7 +75,7 @@ pub fn build(b: *std.Build) void {
         "-D_GNU_SOURCE",
     };
 
-    // Add base sources
+    // Add base sources with version flags
     for (base_sources) |src| {
         var flags = std.ArrayList([]const u8).init(b.allocator);
         flags.appendSlice(&base_flags) catch @panic("OOM");
@@ -104,6 +104,10 @@ pub fn build(b: *std.Build) void {
         flags.append(b.fmt("-DAPP_GIT_COMMIT=\"{s}\"", .{git_commit})) catch @panic("OOM");
         flags.append("-DAPP_BUILD_DATE=\"reproducible\"") catch @panic("OOM");
 
+        if (enable_tui) {
+            flags.append("-DENABLE_TUI=1") catch @panic("OOM");
+        }
+
         exe.addCSourceFile(.{
             .file = b.path("src/core/keychain_macos.c"),
             .flags = flags.items,
@@ -120,6 +124,10 @@ pub fn build(b: *std.Build) void {
         flags.append(b.fmt("-DAPP_NAME=\"{s}\"", .{app_name})) catch @panic("OOM");
         flags.append(b.fmt("-DAPP_GIT_COMMIT=\"{s}\"", .{git_commit})) catch @panic("OOM");
         flags.append("-DAPP_BUILD_DATE=\"reproducible\"") catch @panic("OOM");
+
+        if (enable_tui) {
+            flags.append("-DENABLE_TUI=1") catch @panic("OOM");
+        }
 
         exe.addCSourceFile(.{
             .file = b.path("src/core/keychain_linux.c"),
@@ -148,11 +156,19 @@ pub fn build(b: *std.Build) void {
             "src/tui/tui_progress.c",
             "src/tui/tui_ncurses.c",
             "src/tui/tui_pane.c",
+            "src/tui/tui_pane_launch.c",
             "src/tui/tui_layout.c",
             "src/tui/tui_pty.c",
+            "src/tui/tui_pty_spawn.c",
             "src/tui/tui_mux.c",
             "src/tui/tui_input.c",
             "src/tui/tui_render.c",
+            "src/tui/tui_mux_event.c",
+            "src/tui/tui_mux_nav.c",
+            "src/tui/tui_term_emulator.c",
+            "src/tui/tui_workspace.c",
+            "src/tui/tui_command.c",
+            "src/core/keychain.c",
         };
 
         for (tui_sources) |src| {
@@ -165,7 +181,6 @@ pub fn build(b: *std.Build) void {
     }
 
     exe.linkLibC();
-
     // Link OpenSSL for encryption
     exe.linkSystemLibrary("crypto");
     exe.linkSystemLibrary("ssl");
@@ -178,14 +193,13 @@ pub fn build(b: *std.Build) void {
         if (ncurses_prefix) |pref| {
             exe.addIncludePath(.{ .cwd_relative = b.fmt("{s}/include", .{pref}) });
             exe.addLibraryPath(.{ .cwd_relative = b.fmt("{s}/lib", .{pref}) });
+        } else if (target.result.os.tag == .macos) {
+            // Handle keg-only ncurses on macOS
+            exe.addIncludePath(.{ .cwd_relative = "/opt/homebrew/opt/ncurses/include" });
+            exe.addLibraryPath(.{ .cwd_relative = "/opt/homebrew/opt/ncurses/lib" });
         }
 
-        if (target.result.os.tag == .windows) {
-            // Prefer PDCurses on Windows
-            exe.linkSystemLibrary("pdcurses");
-        } else {
-            exe.linkSystemLibrary("ncurses");
-        }
+        exe.linkSystemLibrary("ncurses");
     }
 
     b.installArtifact(exe);
@@ -222,11 +236,8 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run test suite");
     test_step.dependOn(&test_cmd.step);
 
-    // Clean command – cross-platform
-    const clean_cmd = if (target.result.os.tag == .windows)
-        b.addSystemCommand(&.{ "cmd", "/C", "rmdir", "/S", "/Q", "zig-out", "&&", "rmdir", "/S", "/Q", ".zig-cache" })
-    else
-        b.addSystemCommand(&.{ "rm", "-rf", "zig-out", ".zig-cache" });
+    // Clean command
+    const clean_cmd = b.addSystemCommand(&.{ "rm", "-rf", "zig-out", ".zig-cache" });
     const clean_step = b.step("clean", "Clean build artifacts");
     clean_step.dependOn(&clean_cmd.step);
 

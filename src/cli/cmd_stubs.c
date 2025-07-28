@@ -390,54 +390,7 @@ app_error cmd_sessions_kill(int argc, char **argv, app_config_t *config) {
   return APP_SUCCESS;
 }
 
-// Multiplexer command stubs
-#ifndef ENABLE_TUI
-// Only provide stubs when TUI is not enabled
-app_error cmd_mux_up(int argc, char **argv, app_config_t *config) {
-  (void)argc;
-  (void)argv;
-  (void)config;
-  fprintf(stderr, "Error: Multiplexer support not compiled in.\n");
-  fprintf(stderr, "Rebuild with -Denable-tui=true to enable TUI support.\n");
-  return APP_ERROR_NOT_IMPLEMENTED;
-}
-
-app_error cmd_mux_ls(int argc, char **argv, app_config_t *config) {
-  (void)argc;
-  (void)argv;
-  (void)config;
-  fprintf(stderr, "Error: Multiplexer support not compiled in.\n");
-  fprintf(stderr, "Rebuild with -Denable-tui=true to enable TUI support.\n");
-  return APP_ERROR_NOT_IMPLEMENTED;
-}
-
-app_error cmd_mux_attach(int argc, char **argv, app_config_t *config) {
-  (void)argc;
-  (void)argv;
-  (void)config;
-  fprintf(stderr, "Error: Multiplexer support not compiled in.\n");
-  fprintf(stderr, "Rebuild with -Denable-tui=true to enable TUI support.\n");
-  return APP_ERROR_NOT_IMPLEMENTED;
-}
-
-app_error cmd_mux_send(int argc, char **argv, app_config_t *config) {
-  (void)argc;
-  (void)argv;
-  (void)config;
-  fprintf(stderr, "Error: Multiplexer support not compiled in.\n");
-  fprintf(stderr, "Rebuild with -Denable-tui=true to enable TUI support.\n");
-  return APP_ERROR_NOT_IMPLEMENTED;
-}
-
-app_error cmd_mux_down(int argc, char **argv, app_config_t *config) {
-  (void)argc;
-  (void)argv;
-  (void)config;
-  fprintf(stderr, "Error: Multiplexer support not compiled in.\n");
-  fprintf(stderr, "Rebuild with -Denable-tui=true to enable TUI support.\n");
-  return APP_ERROR_NOT_IMPLEMENTED;
-}
-#endif
+// Multiplexer command stubs are now in cmd_mux.c
 
 // Config command stubs
 app_error cmd_config_show(int argc, char **argv, app_config_t *config) {
