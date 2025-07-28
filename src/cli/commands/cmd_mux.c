@@ -2,17 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cli/commands.h"
 #include "core/config.h"
 #include "core/error.h"
 #include "core/session.h"
 #include "utils/logging.h"
 #include "utils/memory.h"
-#include "cli/commands.h"
 
 #ifdef ENABLE_TUI
-#include "tui/tui_mux.h"
-#include "../core/session.h"
-#include "../tui/tui_mux.h"
+#include "tui/mux/tui_mux.h"
 
 // Launch multiplexer
 app_error cmd_mux_up(int argc, char **argv, app_config_t *config) {

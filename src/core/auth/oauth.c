@@ -14,12 +14,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "core/config.h"
 #include "keychain.h"
 #include "utils/http.h"
 #include "utils/json.h"
 #include "utils/logging.h"
 #include "utils/memory.h"
-#include "config.h"
 
 #define OAUTH_ACCOUNTS_DIR ".fry/accounts"
 #define OAUTH_KEY_FILE ".fry/.key"

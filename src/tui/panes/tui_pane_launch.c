@@ -3,19 +3,19 @@
  * Connects panes with PTY process spawning for Claude Code
  */
 
+#include <core/config.h>
+#include <core/session.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <core/config.h>
-#include <core/session.h>
 #include <utils/logging.h>
 #include <utils/memory.h>
-#include "tui_pane.h"
-#include "tui_pty.h"
+
+#include "tui/panes/tui_pane.h"
+#include "tui/pty/tui_pty.h"
 
 // Default Claude Code command
 #define CLAUDE_CODE_COMMAND "claude"
