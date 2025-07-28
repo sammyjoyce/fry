@@ -115,9 +115,9 @@ app_error cmd_mux_up(int argc, char **argv, app_config_t *config) {
     }
   }
 
-  // Run the multiplexer
+  // Run the multiplexer with enhanced event loop
   LOG_INFO("Starting multiplexer main loop...");
-  err = app_tui_mux_run(mux);
+  err = app_tui_mux_run_enhanced(mux);
 
   // Cleanup
   LOG_INFO("Shutting down multiplexer...");

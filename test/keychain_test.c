@@ -5,8 +5,8 @@
 #include <string.h>
 #include <time.h>
 
-#include "../src/core/memory.h"
 #include "../src/core/oauth.h"
+#include "../src/utils/memory.h"
 
 static void test_mock_keychain_basic() {
   printf("Testing mock keychain basic operations...\n");

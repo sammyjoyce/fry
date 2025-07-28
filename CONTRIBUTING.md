@@ -104,11 +104,6 @@ docs(readme): update installation instructions
    
    # Fedora/RHEL
    sudo dnf install ncurses-devel clang-tools-extra
-   
-   # Windows (using vcpkg)
-   git clone https://github.com/Microsoft/vcpkg.git
-   cd vcpkg && bootstrap-vcpkg.bat
-   vcpkg install pdcurses:x64-windows
    ```
 
 4. **Set up pre-commit hooks** (recommended):
@@ -154,9 +149,6 @@ zig build test
 # Check code without building
 zig build check
 
-# Cross-compile for Windows (from Linux/macOS)
-zig build -Dtarget=x86_64-windows
-
 # Install to a custom prefix
 zig build install --prefix ~/.local
 ```
@@ -166,7 +158,7 @@ zig build install --prefix ~/.local
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-Doptimize=` | Build mode: `Debug`, `ReleaseSafe`, `ReleaseFast`, `ReleaseSmall` | `Debug` |
-| `-Dtarget=` | Target triple (e.g., `x86_64-windows`, `aarch64-linux`) | Native |
+| `-Dtarget=` | Target triple (e.g., `x86_64-linux`, `aarch64-linux`) | Native |
 | `-Denable-tui=` | Enable TUI support | `true` |
 | `--prefix` | Installation directory | `zig-out` |
 
@@ -192,7 +184,6 @@ zig build install --prefix ~/.local
 - **"Unable to find ncurses"**: Install the development package for your OS (see step 3 above)
 - **"C header not found"**: Check that all include paths are added in `build.zig`
 - **Cache issues**: Run `rm -rf zig-cache zig-out` and rebuild
-- **Windows DLL issues**: Ensure vcpkg bin directory is in PATH
 
 For more details, see the [Architecture Overview](docs/ARCHITECTURE.md).
 

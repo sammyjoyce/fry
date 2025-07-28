@@ -29,6 +29,7 @@ typedef enum {
   APP_ERROR_CONFIG_INVALID = 5,
   APP_ERROR_MISSING_ARG = 6,
   APP_ERROR_UNKNOWN_OPTION = 7,
+  APP_ERROR_USAGE = 8,
 
   // System errors (10-19): Critical failures that typically cannot be recovered
   // from without administrator intervention. These indicate resource
@@ -42,6 +43,8 @@ typedef enum {
   APP_ERROR_RESOURCE = 15,
   APP_ERROR_SIGNAL = 16,
   APP_ERROR_NOT_FOUND = 17,
+  APP_ERROR_SYSTEM = 18,
+  APP_ERROR_BUFFER_TOO_SMALL = 19,
 
   // Data processing errors (20-29): Errors that occur during data validation
   // or processing. These might be recoverable depending on the context.
@@ -51,6 +54,9 @@ typedef enum {
   APP_ERROR_OVERFLOW = 23,
   APP_ERROR_UNDERFLOW = 24,
   APP_ERROR_OUT_OF_RANGE = 25,
+  APP_ERROR_FILE_OPEN = 26,
+  APP_ERROR_FILE_WRITE = 27,
+  APP_ERROR_FILE_READ = 28,
 
   // Feature-specific errors (30+): Reserved for application-specific features
   // that may be added by users of this template.
@@ -89,6 +95,12 @@ typedef enum {
   APP_ERROR_PARTIAL = 75,
   APP_ERROR_RATE_LIMITED = 76,
   APP_ERROR_API = 77,
+
+  // I/O and timing errors (80-89)
+  APP_ERROR_TIMEOUT = 80,
+  APP_ERROR_EOF = 81,
+  APP_ERROR_RETRY = 82,
+  APP_ERROR_INCOMPLETE = 83,
 } app_error;
 
 // Get human-readable error description for user-facing messages.

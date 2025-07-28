@@ -12,13 +12,16 @@
 // Forward declarations
 typedef struct app_tui_pane app_tui_pane_t;
 typedef struct app_tui_pane_manager app_tui_pane_manager_t;
+typedef struct app_session app_session_t;
+typedef struct tui_term_emulator_t tui_term_emulator_t;
 
 // Pane state
 typedef enum {
+  PANE_STATE_INACTIVE,
+  PANE_STATE_CONNECTING,
   PANE_STATE_ACTIVE,
-  PANE_STATE_BUSY,
-  PANE_STATE_ERROR,
-  PANE_STATE_INACTIVE
+  PANE_STATE_DISCONNECTED,
+  PANE_STATE_ERROR
 } app_pane_state_t;
 
 // Pane geometry
@@ -50,12 +53,16 @@ struct app_tui_pane {
   app_pane_state_t state;  // Current pane state
   bool has_focus;          // Whether pane has focus
   time_t last_activity;    // Last activity timestamp
+  time_t last_focus_time;  // When pane last had focus
 
   // Content
-  char **buffer;         // Scrollback buffer
+  char **buffer;         // Scrollback buffer (legacy)
   size_t buffer_size;    // Buffer capacity
   size_t buffer_lines;   // Current lines in buffer
   size_t scroll_offset;  // Current scroll position
+
+  // Terminal emulator
+  tui_term_emulator_t *term_emulator;  // ANSI escape sequence processor
 
   // Metadata
   char *title;               // Pane title
@@ -90,6 +97,13 @@ app_tui_pane_manager_create(app_tui_pane_manager_t **manager, size_t max_panes);
 
 APP_NODISCARD app_error
 app_tui_pane_manager_destroy(app_tui_pane_manager_t *manager);
+
+// Pane manager queries
+size_t app_tui_pane_manager_get_count(app_tui_pane_manager_t *manager);
+app_tui_pane_t *app_tui_pane_manager_get_by_index(
+    app_tui_pane_manager_t *manager, size_t index);
+app_tui_pane_t *app_tui_pane_manager_get_focused(
+    app_tui_pane_manager_t *manager);
 
 // Focus management
 APP_NODISCARD app_error app_tui_pane_focus(app_tui_pane_manager_t *manager,
@@ -132,11 +146,28 @@ APP_NODISCARD app_error app_tui_pane_render(app_tui_pane_t *pane);
 APP_NODISCARD app_error app_tui_pane_render_border(app_tui_pane_t *pane);
 
 APP_NODISCARD app_error app_tui_pane_refresh(app_tui_pane_t *pane);
+APP_NODISCARD app_error app_tui_pane_scroll(app_tui_pane_t *pane, int delta);
+APP_NODISCARD app_error app_tui_pane_scroll_to(app_tui_pane_t *pane,
+                                               int position);
 
 // Utility functions
-APP_NODISCARD app_error app_tui_pane_get_by_id(app_tui_pane_manager_t *manager,
-                                               const char *id,
-                                               app_tui_pane_t **pane);
+app_tui_pane_t *app_tui_pane_get_by_id(app_tui_pane_manager_t *manager,
+                                       const char *id);
 
-APP_NODISCARD app_error app_tui_pane_get_by_number(
-    app_tui_pane_manager_t *manager, int number, app_tui_pane_t **pane);
+app_tui_pane_t *app_tui_pane_get_by_number(app_tui_pane_manager_t *manager,
+                                           int number);
+
+APP_NODISCARD app_error app_tui_pane_manager_update_size(
+    app_tui_pane_manager_t *manager, int width, int height);
+
+// Process management
+APP_NODISCARD app_error app_tui_pane_launch_claude(app_tui_pane_t *pane,
+                                                   const char *account_id,
+                                                   app_session_t *session);
+
+APP_NODISCARD app_error app_tui_pane_check_process(app_tui_pane_t *pane);
+
+APP_NODISCARD app_error app_tui_pane_terminate_process(app_tui_pane_t *pane);
+
+// Pane properties
+int app_tui_pane_get_number(app_tui_pane_t *pane);

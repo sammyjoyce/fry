@@ -957,7 +957,9 @@ app_error app_oauth_authorize_url(char **url, const app_oauth_pkce_t *pkce,
     // Default claude.ai mode
     auth_endpoint = "https://claude.ai/oauth/authorize";
     client_id = OAUTH_CLIENT_ID;
-    redirect_uri = "https://claude.ai/oauth/callback";
+    // Use the same redirect URI as console mode (same as SST/OpenCode)
+    redirect_uri =
+        OAUTH_REDIRECT_URI;  // https://console.anthropic.com/oauth/code/callback
     scopes = "user:inference user:profile";
   }
 

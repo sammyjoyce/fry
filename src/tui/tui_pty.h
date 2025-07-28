@@ -75,13 +75,6 @@ APP_NODISCARD app_error app_pty_make_raw(int fd);
 
 APP_NODISCARD app_error app_pty_restore_mode(int fd);
 
-// Platform-specific implementations
-#ifdef _WIN32
-// Windows ConPTY support
-APP_NODISCARD app_error app_pty_create_conpty(app_pty_t *pty,
-                                              const app_pty_config_t *config);
-#else
 // POSIX PTY support
 APP_NODISCARD app_error app_pty_create_posix(app_pty_t *pty,
                                              const app_pty_config_t *config);
-#endif

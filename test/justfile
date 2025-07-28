@@ -1,0 +1,124 @@
+# Justfile for TUI tests migrated from Makefile
+
+# Compiler and flags
+CC := "clang"
+CFLAGS := "-Wall -Wextra -std=c23 -D_GNU_SOURCE -DENABLE_TUI_TESTS=1 -I../src"
+LDFLAGS := "-lncurses"
+
+# Source files
+TUI_SRCS := "../src/tui/tui_pane.c \
+           ../src/tui/tui_layout.c \
+           ../src/tui/tui_pty.c \
+           ../src/tui/tui_mux.c \
+           ../src/tui/tui_ncurses.c \
+           ../src/tui/tui.c \
+           ../src/tui/tui_render.c \
+           ../src/tui/tui_input.c"
+
+UTIL_SRCS := "../src/utils/memory.c \
+            ../src/utils/logging.c \
+            ../src/core/error.c"
+
+# Test executable names
+TEST_EXES := "test_tui_ncurses test_tui_pane test_tui_layout test_tui_pty test_tui_pty_spawn test_tui_mux test_tui test_tui_render test_tui_event test_tui_term_emulator test_tui_input test_tui_mux_nav run_tui_tests"
+
+# Default target
+default: test
+
+# Helper to compile
+compile name sources:
+    @echo "Compiling {{name}}"
+    {{CC}} {{CFLAGS}} -o {{name}} {{sources}} {{LDFLAGS}}
+
+# Individual compile recipes
+
+test_tui_ncurses:
+    {{CC}} {{CFLAGS}} -o $@ tui_ncurses_test.c {{TUI_SRCS}} {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui_pane:
+    {{CC}} {{CFLAGS}} -o $@ tui_pane_test.c {{TUI_SRCS}} {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui_layout:
+    {{CC}} {{CFLAGS}} -o $@ tui_layout_test.c {{TUI_SRCS}} {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui_pty:
+    {{CC}} {{CFLAGS}} -o $@ tui_pty_test.c {{TUI_SRCS}} {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui_pty_spawn:
+    {{CC}} {{CFLAGS}} -o $@ tui_pty_spawn_test.c {{TUI_SRCS}} {{UTIL_SRCS}} ../src/tui/tui_pty_spawn.c ../src/tui/tui_pane_launch.c ../src/core/session.c {{LDFLAGS}}
+
+test_tui_mux:
+    {{CC}} {{CFLAGS}} -o $@ tui_mux_test.c {{TUI_SRCS}} {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui:
+    {{CC}} {{CFLAGS}} -o $@ tui_test.c {{TUI_SRCS}} {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui_render:
+    {{CC}} {{CFLAGS}} -o $@ tui_render_test.c {{TUI_SRCS}} {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui_event:
+    {{CC}} {{CFLAGS}} -o $@ tui_event_test.c {{TUI_SRCS}} {{UTIL_SRCS}} ../src/tui/tui_mux_event.c {{LDFLAGS}}
+
+test_tui_term_emulator:
+    {{CC}} {{CFLAGS}} -o $@ tui_term_emulator_test.c ../src/tui/tui_term_emulator.c {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui_input:
+    {{CC}} {{CFLAGS}} -o $@ tui_input_test.c ../src/tui/tui_input.c {{UTIL_SRCS}} {{LDFLAGS}}
+
+test_tui_mux_nav:
+    {{CC}} {{CFLAGS}} -o $@ tui_mux_nav_test.c {{TUI_SRCS}} {{UTIL_SRCS}} ../src/tui/tui_mux_nav.c ../src/tui/tui_pane_launch.c ../src/tui/tui_term_emulator.c ../src/tui/tui_pty_spawn.c ../src/core/session.c {{LDFLAGS}}
+
+run_tui_tests:
+    {{CC}} {{CFLAGS}} -o $@ run_tui_tests.c
+
+# Aggregate target to build all executables
+all: {{TEST_EXES}}
+
+# Clean artifacts
+clean:
+    rm -f {{TEST_EXES}}
+
+# Run all tests
+_test_all: all
+    ./run_tui_tests
+
+# Shortcut aliases matching old make targets (compile + run)
+
+ncurses: test_tui_ncurses
+    ./test_tui_ncurses
+
+pane: test_tui_pane
+    ./test_tui_pane
+
+layout: test_tui_layout
+    ./test_tui_layout
+
+pty: test_tui_pty
+    ./test_tui_pty
+
+pty_spawn: test_tui_pty_spawn
+    ./test_tui_pty_spawn
+
+mux: test_tui_mux
+    ./test_tui_mux
+
+integration: test_tui
+    ./test_tui
+
+render: test_tui_render
+    ./test_tui_render
+
+event: test_tui_event
+    ./test_tui_event
+
+term_emulator: test_tui_term_emulator
+    ./test_tui_term_emulator
+
+input: test_tui_input
+    ./test_tui_input
+
+nav: test_tui_mux_nav
+    ./test_tui_mux_nav
+
+# Primary entry for root justfile
+ test: _test_all

@@ -8,7 +8,7 @@
 #include "../utils/json.h"
 #include "../utils/logging.h"
 #include "../utils/memory.h"
-#include "keychain.h"
+#include "oauth.h"
 
 // Constants
 static const char *KEYCHAIN_SERVICE = "com.anthropic.fry";
@@ -199,8 +199,8 @@ static app_oauth_token_t *parse_token_from_json(const char *json_str,
 /**
  * @brief Store token in macOS keychain
  */
-app_error keychain_macos_store_token(const char *account_id,
-                                     const app_oauth_token_t *token) {
+app_error keychain_store_token(const char *account_id,
+                              const app_oauth_token_t *token) {
   if (!account_id || !token) {
     return APP_ERROR_INVALID_ARG;
   }
@@ -272,8 +272,8 @@ app_error keychain_macos_store_token(const char *account_id,
 /**
  * @brief Retrieve token from macOS keychain
  */
-app_error keychain_macos_retrieve_token(const char *account_id,
-                                        app_oauth_token_t **token) {
+app_error keychain_retrieve_token(const char *account_id,
+                                 app_oauth_token_t **token) {
   if (!account_id || !token) {
     return APP_ERROR_INVALID_ARG;
   }
@@ -329,7 +329,7 @@ app_error keychain_macos_retrieve_token(const char *account_id,
 /**
  * @brief Delete token from macOS keychain
  */
-app_error keychain_macos_delete_token(const char *account_id) {
+app_error keychain_delete_token(const char *account_id) {
   if (!account_id) {
     return APP_ERROR_INVALID_ARG;
   }
@@ -371,7 +371,7 @@ app_error keychain_macos_delete_token(const char *account_id) {
 /**
  * @brief List all accounts in macOS keychain
  */
-app_error keychain_macos_list_accounts(char ***account_ids, size_t *count) {
+app_error keychain_list_accounts(char ***account_ids, size_t *count) {
   if (!account_ids || !count) {
     return APP_ERROR_INVALID_ARG;
   }
@@ -439,7 +439,7 @@ app_error keychain_macos_list_accounts(char ***account_ids, size_t *count) {
 /**
  * @brief Check if token exists in macOS keychain
  */
-app_error keychain_macos_has_token(const char *account_id, bool *exists) {
+app_error keychain_has_token(const char *account_id, bool *exists) {
   if (!account_id || !exists) {
     return APP_ERROR_INVALID_ARG;
   }

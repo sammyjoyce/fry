@@ -170,8 +170,18 @@ static void test_mock_window_content(void) {
   g_ncurses->mvwprintw(win, 0, 25,
                        "This text is too long and will be truncated");
   // Should only have 5 characters (30 - 25)
-  assert(mwin->content[0][29] ==
-         's');  // Last character should be 's' from "This"
+  // Debug: print what's actually at positions 25-29
+  printf("  Debug: Content at positions 25-29: '");
+  for (int i = 25; i < 30; i++) {
+    printf("%c", mwin->content[0][i]);
+  }
+  printf("'\n");
+  // The text "This " (with space) fits in positions 25-29
+  assert(mwin->content[0][25] == 'T');
+  assert(mwin->content[0][26] == 'h');
+  assert(mwin->content[0][27] == 'i');
+  assert(mwin->content[0][28] == 's');
+  assert(mwin->content[0][29] == ' ');  // Space after "This"
 
   // Cleanup
   g_ncurses->delwin(win);

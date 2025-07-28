@@ -3,10 +3,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
+#ifdef __APPLE__
+#include <ncurses.h>
+#else
+#include <ncurses/ncurses.h>
+#endif
+
+#include "../core/session.h"
 #include "../utils/logging.h"
 #include "../utils/memory.h"
+#include "tui_command.h"
+#include "tui_input.h"
 #include "tui_ncurses.h"
+#include "tui_workspace.h"
+
+// Forward declaration for terminal size function
+static app_error app_get_terminal_size(int *width, int *height);
 
 // Create multiplexer
 app_error app_tui_mux_create(app_tui_mux_t **mux,
@@ -38,13 +53,19 @@ app_error app_tui_mux_create(app_tui_mux_t **mux,
     return err;
   }
 
-  // Get terminal size
-  int width = tui_get_max_x();
-  int height = tui_get_max_y();
+  // Get terminal size without relying on initialized TUI
+  int width, height;
+  err = app_get_terminal_size(&width, &height);
+  if (err != APP_SUCCESS) {
+    // Fallback to default size
+    width = 80;
+    height = 24;
+    LOG_WARNING("Failed to get terminal size, using default %dx%d", width, height);
+  }
 
   err = app_tui_layout_create(&m->layout_manager, width, height);
   if (err != APP_SUCCESS) {
-    app_tui_pane_manager_destroy(m->pane_manager);
+    (void)app_tui_pane_manager_destroy(m->pane_manager);
     app_free(m);
     return err;
   }
@@ -53,10 +74,25 @@ app_error app_tui_mux_create(app_tui_mux_t **mux,
   m->command_buffer_size = 256;
   m->command_buffer = app_calloc(m->command_buffer_size, 1);
   if (!m->command_buffer) {
-    app_tui_layout_destroy(m->layout_manager);
-    app_tui_pane_manager_destroy(m->pane_manager);
+    (void)app_tui_layout_destroy(m->layout_manager);
+    (void)app_tui_pane_manager_destroy(m->pane_manager);
     app_free(m);
     return APP_ERROR_MEMORY;
+  }
+
+  // Create input system
+  err = app_tui_input_create(&m->input_system);
+  if (err != APP_SUCCESS) {
+    LOG_WARNING("Failed to create input system: %s", app_error_string(err));
+    // Continue without advanced input system
+    m->input_system = NULL;
+  }
+
+  // Initialize command mode
+  err = app_tui_command_init(m);
+  if (err != APP_SUCCESS) {
+    LOG_WARNING("Failed to initialize command mode: %s", app_error_string(err));
+    // Continue without command mode
   }
 
   *mux = m;
@@ -70,8 +106,16 @@ app_error app_tui_mux_destroy(app_tui_mux_t *mux) {
   }
 
   // Destroy components
-  app_tui_pane_manager_destroy(mux->pane_manager);
-  app_tui_layout_destroy(mux->layout_manager);
+  (void)app_tui_pane_manager_destroy(mux->pane_manager);
+  (void)app_tui_layout_destroy(mux->layout_manager);
+
+  // Destroy input system
+  if (mux->input_system) {
+    app_tui_input_destroy(mux->input_system);
+  }
+
+  // Cleanup command mode
+  (void)app_tui_command_cleanup(mux);
 
   // Free command buffer
   app_free(mux->command_buffer);
@@ -124,6 +168,29 @@ app_error app_tui_mux_init(app_tui_mux_t *mux) {
     return APP_ERROR_INTERNAL;
   }
 
+  // Enable raw mode in input system
+  if (mux->input_system) {
+    err = app_tui_input_enable_raw_mode(mux->input_system);
+    if (err != APP_SUCCESS) {
+      LOG_WARNING("Failed to enable raw mode: %s", app_error_string(err));
+    }
+
+    // Enable mouse if configured
+    if (mux->config.enable_mouse) {
+      err = app_tui_input_enable_mouse(mux->input_system);
+      if (err != APP_SUCCESS) {
+        LOG_WARNING("Failed to enable mouse: %s", app_error_string(err));
+      }
+    }
+
+    // Register navigation keybindings
+    err = app_tui_mux_register_nav_keys(mux);
+    if (err != APP_SUCCESS) {
+      LOG_WARNING("Failed to register navigation keys: %s",
+                  app_error_string(err));
+    }
+  }
+
   LOG_INFO("Multiplexer TUI initialized");
 
   return APP_SUCCESS;
@@ -165,21 +232,21 @@ app_error app_tui_mux_run(app_tui_mux_t *mux) {
   mux->running = true;
 
   // Initial render
-  app_tui_mux_render(mux);
+  (void)app_tui_mux_render(mux);
 
   // Main event loop
   while (mux->running && mux->state != MUX_STATE_EXITING) {
     // Handle input
     int ch = tui_get_char();
     if (ch != ERR) {
-      app_tui_mux_handle_input(mux, ch);
+      (void)app_tui_mux_handle_input(mux, ch);
     }
 
     // TODO: Poll PTYs for output
 
     // Render if needed
     if (mux->pane_manager->needs_refresh) {
-      app_tui_mux_render(mux);
+      (void)app_tui_mux_render(mux);
       mux->pane_manager->needs_refresh = false;
     }
 
@@ -214,6 +281,25 @@ app_error app_tui_mux_add_pane(app_tui_mux_t *mux, const char *account_id,
   if (err != APP_SUCCESS) {
     LOG_WARNING("Failed to apply layout after adding pane: %s",
                 app_error_string(err));
+  }
+
+  // Launch Claude Code in the new pane
+  if (*pane) {
+    // For now, pass NULL for session - OAuth token will come from environment
+    err = app_tui_pane_launch_claude(*pane, account_id, NULL);
+    if (err != APP_SUCCESS) {
+      LOG_ERROR("Failed to launch Claude Code in pane: %s",
+                app_error_string(err));
+      // Don't fail the whole operation, just mark pane as error
+      (*pane)->state = PANE_STATE_ERROR;
+    }
+
+    // Add PTY to event loop monitoring
+    if ((*pane)->pty_master >= 0 && mux->running) {
+      // This will be picked up by the enhanced event loop
+      LOG_DEBUG("Added PTY fd %d to monitoring for pane %d",
+                (*pane)->pty_master, (*pane)->number);
+    }
   }
 
   return APP_SUCCESS;
@@ -258,6 +344,9 @@ app_error app_tui_mux_handle_input(app_tui_mux_t *mux, int key) {
       mux->state = MUX_STATE_EXITING;
       return APP_SUCCESS;
 
+    case ':':
+      return app_tui_command_enter(mux);
+
     default:
       // Alt+number for direct pane access
       if (key >= '1' && key <= '9') {
@@ -268,11 +357,7 @@ app_error app_tui_mux_handle_input(app_tui_mux_t *mux, int key) {
     break;
 
   case INPUT_MODE_COMMAND:
-    // TODO: Handle command mode input
-    if (key == 27) {  // ESC
-      return app_tui_mux_exit_command_mode(mux);
-    }
-    break;
+    return app_tui_command_handle_key(mux, key);
 
   default:
     break;
@@ -283,63 +368,17 @@ app_error app_tui_mux_handle_input(app_tui_mux_t *mux, int key) {
 
 // Enter command mode
 app_error app_tui_mux_enter_command_mode(app_tui_mux_t *mux) {
-  if (!mux) {
-    return APP_ERROR_INVALID_ARG;
-  }
-
-  mux->input_mode = INPUT_MODE_COMMAND;
-  memset(mux->command_buffer, 0, mux->command_buffer_size);
-  mux->command_cursor = 0;
-
-  // Create command line window if needed
-  if (!mux->command_line) {
-    int max_y = tui_get_max_y();
-    int max_x = tui_get_max_x();
-    mux->command_line = g_ncurses->newwin(1, max_x, max_y - 1, 0);
-  }
-
-  return APP_SUCCESS;
+  return app_tui_command_enter(mux);
 }
 
 // Exit command mode
 app_error app_tui_mux_exit_command_mode(app_tui_mux_t *mux) {
-  if (!mux) {
-    return APP_ERROR_INVALID_ARG;
-  }
-
-  mux->input_mode = INPUT_MODE_NORMAL;
-
-  // Clear command line
-  if (mux->command_line) {
-    g_ncurses->wclear(mux->command_line);
-    g_ncurses->wrefresh(mux->command_line);
-  }
-
-  return APP_SUCCESS;
+  return app_tui_command_exit(mux);
 }
 
-// Focus pane by number
-app_error app_tui_mux_focus_number(app_tui_mux_t *mux, int number) {
-  if (!mux) {
-    return APP_ERROR_INVALID_ARG;
-  }
-
-  return app_tui_pane_focus_by_number(mux->pane_manager, number);
-}
-
-// Focus pane by direction
-app_error app_tui_mux_focus_direction(app_tui_mux_t *mux, int dx, int dy) {
-  if (!mux) {
-    return APP_ERROR_INVALID_ARG;
-  }
-
-  // TODO: Implement directional navigation based on layout
-  // For now, use simple next/prev
-  if (dx > 0 || dy > 0) {
-    return app_tui_pane_focus_next(mux->pane_manager);
-  } else {
-    return app_tui_pane_focus_prev(mux->pane_manager);
-  }
+// Execute command
+app_error app_tui_mux_execute_command(app_tui_mux_t *mux, const char *command) {
+  return app_tui_command_parse_and_execute(mux, command);
 }
 
 // Render the multiplexer
@@ -361,7 +400,7 @@ app_error app_tui_mux_render(app_tui_mux_t *mux) {
     case PANE_STATE_ACTIVE:
       color_pair = 1;
       break;
-    case PANE_STATE_BUSY:
+    case PANE_STATE_CONNECTING:
       color_pair = 2;
       break;
     case PANE_STATE_ERROR:
@@ -378,26 +417,34 @@ app_error app_tui_mux_render(app_tui_mux_t *mux) {
     g_ncurses->attron(COLOR_PAIR(color_pair));
 
     // Draw simple border
+    WINDOW *win = app_ncurses_stdscr();
     for (int y = pane->geometry.y; y < pane->geometry.y + pane->geometry.height;
          y++) {
-      g_ncurses->mvwaddch(stdscr, y, pane->geometry.x, '|');
-      g_ncurses->mvwaddch(stdscr, y, pane->geometry.x + pane->geometry.width - 1, '|');
+      g_ncurses->wmove(win, y, pane->geometry.x);
+      g_ncurses->waddch(win, '|');
+      g_ncurses->wmove(win, y, pane->geometry.x + pane->geometry.width - 1);
+      g_ncurses->waddch(win, '|');
     }
     for (int x = pane->geometry.x; x < pane->geometry.x + pane->geometry.width;
          x++) {
-      g_ncurses->mvwaddch(stdscr, pane->geometry.y, x, '-');
-      g_ncurses->mvwaddch(stdscr, pane->geometry.y + pane->geometry.height - 1, x, '-');
+      g_ncurses->wmove(win, pane->geometry.y, x);
+      g_ncurses->waddch(win, '-');
+      g_ncurses->wmove(win, pane->geometry.y + pane->geometry.height - 1, x);
+      g_ncurses->waddch(win, '-');
     }
 
     // Draw corners
-    g_ncurses->mvwaddch(stdscr, pane->geometry.y, pane->geometry.x, '+');
-    g_ncurses->mvwaddch(stdscr, pane->geometry.y,
-                       pane->geometry.x + pane->geometry.width - 1, '+');
-    g_ncurses->mvwaddch(stdscr, pane->geometry.y + pane->geometry.height - 1,
-                       pane->geometry.x, '+');
-    g_ncurses->mvwaddch(stdscr, pane->geometry.y + pane->geometry.height - 1,
-                       pane->geometry.x + pane->geometry.width - 1, '+');
-
+    g_ncurses->wmove(win, pane->geometry.y, pane->geometry.x);
+    g_ncurses->waddch(win, '+');
+    g_ncurses->wmove(win, pane->geometry.y,
+                     pane->geometry.x + pane->geometry.width - 1);
+    g_ncurses->waddch(win, '+');
+    g_ncurses->wmove(win, pane->geometry.y + pane->geometry.height - 1,
+                     pane->geometry.x);
+    g_ncurses->waddch(win, '+');
+    g_ncurses->wmove(win, pane->geometry.y + pane->geometry.height - 1,
+                     pane->geometry.x + pane->geometry.width - 1);
+    g_ncurses->waddch(win, '+');
     // Draw pane number
     g_ncurses->mvprintw(pane->geometry.y, pane->geometry.x + 2, " %d ",
                         pane->number);
@@ -415,11 +462,11 @@ app_error app_tui_mux_render(app_tui_mux_t *mux) {
   }
 
   // Render status bar
-  app_tui_mux_render_status_bar(mux);
+  (void)app_tui_mux_render_status_bar(mux);
 
   // Render command line if in command mode
   if (mux->input_mode == INPUT_MODE_COMMAND) {
-    app_tui_mux_render_command_line(mux);
+    (void)app_tui_mux_render_command_line(mux);
   }
 
   // Refresh screen
@@ -473,7 +520,66 @@ app_error app_tui_mux_render_command_line(app_tui_mux_t *mux) {
 
   g_ncurses->wclear(mux->command_line);
   g_ncurses->mvwprintw(mux->command_line, 0, 0, ":%s", mux->command_buffer);
+
+  // Position cursor
+  g_ncurses->wmove(mux->command_line, 0, 1 + (int)mux->command_cursor);
   g_ncurses->wrefresh(mux->command_line);
 
   return APP_SUCCESS;
+}
+
+// Save workspace
+app_error app_tui_mux_save_workspace(app_tui_mux_t *mux, const char *path) {
+  return app_tui_workspace_save(mux, path);
+}
+
+// Load workspace
+app_error app_tui_mux_load_workspace(app_tui_mux_t *mux, const char *path) {
+  return app_tui_workspace_load(mux, path);
+}
+
+// Remove pane from multiplexer
+app_error app_tui_mux_remove_pane(app_tui_mux_t *mux, app_tui_pane_t *pane) {
+  if (!mux || !mux->pane_manager || !pane) {
+    return APP_ERROR_INVALID_ARG;
+  }
+
+  // Remove pane from pane manager
+  app_error err = app_tui_pane_destroy(mux->pane_manager, pane);
+  if (err != APP_SUCCESS) {
+    return err;
+  }
+
+  // Recalculate layout
+  return app_tui_layout_calculate(mux->layout_manager, mux->pane_manager->panes, mux->pane_manager->pane_count);
+}
+
+// Get terminal size using ioctl
+static app_error app_get_terminal_size(int *width, int *height) {
+  if (!width || !height) {
+    return APP_ERROR_INVALID_ARG;
+  }
+
+  struct winsize ws;
+  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1) {
+    return APP_ERROR_IO;
+  }
+
+  *width = ws.ws_col;
+  *height = ws.ws_row;
+  
+  return APP_SUCCESS;
+}
+
+// Set layout mode
+app_error app_tui_mux_set_layout(app_tui_mux_t *mux, app_tui_layout_mode_t mode) {
+  if (!mux || !mux->layout_manager) {
+    return APP_ERROR_INVALID_ARG;
+  }
+
+  // Update layout mode
+  mux->layout_manager->mode = mode;
+
+  // Recalculate layout
+  return app_tui_layout_calculate(mux->layout_manager, mux->pane_manager->panes, mux->pane_manager->pane_count);
 }

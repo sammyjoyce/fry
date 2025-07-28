@@ -72,8 +72,7 @@ body:
         - Debian 11
         - Fedora 39+
         - Arch Linux
-        - Windows 11
-        - Windows 10
+        - Windows (not currently supported)
         - Other (please specify in additional context)
     validations:
       required: true
