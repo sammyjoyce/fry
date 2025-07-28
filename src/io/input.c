@@ -13,8 +13,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../utils/logging.h"
-#include "../utils/memory.h"
+#include "utils/logging.h"
+#include "utils/memory.h"
 
 // Compile-time assertions
 static_assert(INPUT_MAX_SIZE >= 512 * 1024, "Input max size too small");

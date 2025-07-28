@@ -16,18 +16,18 @@
 #include "cli/args.h"
 #include "cli/commands.h"
 #include "cli/help.h"
-#include "core/config.h"
-#include "core/error.h"
-#include "core/oauth.h"
-#include "core/types.h"
+#include <core/config.h>
+#include <core/error.h>
+#include <core/auth/oauth.h>
+#include <core/types.h>
 #include "io/input.h"
 #include "io/output.h"
 #ifdef ENABLE_TUI
 #include "tui/tui.h"
 #endif
-#include "utils/colors.h"
-#include "utils/http.h"
-#include "utils/logging.h"
+#include <utils/colors.h>
+#include <utils/http.h>
+#include <utils/logging.h>
 #include "utils/memory.h"
 
 #if __STDC_VERSION__ >= 201112L
@@ -35,10 +35,28 @@ static _Thread_local int app_thread_id = 0;
 #endif
 
 static app_error initialize_app(int argc, char *argv[], app_config_t **config) {
-  // Show help if no arguments
+  // Launch muxer if no arguments
   if (argc == 1) {
+#ifdef ENABLE_TUI
+    // Create configuration
+    app_error err = app_config_create(config);
+    if (err != APP_SUCCESS) {
+      return err;
+    }
+
+    // Load configuration from various sources
+    (void)app_config_load_default(*config);  // Load from default locations
+    (void)app_config_load_env(*config);
+    
+    // Set noun and verb to launch muxer
+    app_config_set_noun(*config, "mux");
+    app_config_set_verb(*config, "up");
+    
+    return APP_SUCCESS;
+#else
     app_print_concise_help(argv[0]);
     exit(0);
+#endif
   }
 
   // Create configuration
@@ -127,15 +145,6 @@ int main(int argc, char *argv[]) {
             app_strerror(err));
     app_oauth_cleanup();
     app_http_cleanup();
-    return err;
-  }
-
-  // Initialize command system
-  err = app_commands_init();
-  if (err != APP_SUCCESS) {
-    fprintf(stderr, "Failed to initialize command system: %s\n",
-            app_strerror(err));
-    app_oauth_cleanup();
     return err;
   }
 

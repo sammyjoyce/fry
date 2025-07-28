@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "types.h"
+#include "core/types.h"
 
 // Error codes are grouped by category with reserved ranges to aid debugging.
 // Each range represents a different layer of the application, making it easier

@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "../core/error.h"
-#include "../core/types.h"
+#include "core/error.h"
+#include "core/types.h"
 
 // HTTP request/response structures
 typedef struct {

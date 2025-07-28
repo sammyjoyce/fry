@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../core/error.h"
-#include "../core/types.h"
+#include "core/error.h"
+#include "core/types.h"
 
 // Forward declarations
 typedef struct app_config app_config_t;

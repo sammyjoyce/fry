@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../core/types.h"
+#include "core/types.h"
 
 // Read input from stdin with automatic buffer growth.
 // Returns allocated string that must be freed by caller, or NULL on error.

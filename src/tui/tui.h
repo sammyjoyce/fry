@@ -8,8 +8,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "../core/error.h"
-#include "../core/types.h"
+#include <core/error.h>
+#include <core/types.h>
 
 // Forward declaration for progress API
 struct tui_progress;
@@ -98,7 +98,7 @@ int tui_get_max_x(void);
 int tui_get_max_y(void);
 
 // Progress API is declared in a dedicated header to keep tui.h lean.
-#include "tui_progress.h"
+#include "components/tui_progress.h"
 
 // Forward declarations for multiplexer components
 typedef struct tui_t tui_t;

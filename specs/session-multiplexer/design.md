@@ -6,7 +6,7 @@
 Developers working with Claude Code need to manage multiple accounts and maintain separate session contexts for different projects, clients, or use cases. Currently, switching between accounts requires manual re-authentication and loses session state. Additionally, working with multiple Claude Code instances simultaneously requires multiple terminal windows.
 
 ### Solution Summary
-Fry provides a CLI tool that manages multiple Claude Code OAuth accounts with persistent session storage and a Terminal User Interface (TUI) for managing multiple Claude Code sessions simultaneously in a single terminal window. The solution allows seamless switching between different Claude Code instances while maintaining session state and configuration, all within a tiled NCurses-based interface.
+Fry provides a CLI tool that manages multiple Claude Code OAuth accounts with persistent session storage and a Terminal User Interface (TUI) for managing multiple Claude Code sessions simultaneously in a single terminal window. The solution allows seamless switching between different Claude Code instances while maintaining session state and configuration, all within a tiled NCurses-based interface. By default, running `fry` without any arguments will launch the multiplexer TUI.
 
 ### Key Benefits
 - **Multi-account support**: Manage multiple Claude Code accounts from a single CLI

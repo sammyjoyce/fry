@@ -11,8 +11,8 @@
 
 #include <stdbool.h>
 
-#include "error.h"
-#include "types.h"
+#include "core/error.h"
+#include "core/types.h"
 
 // Opaque configuration structure hides implementation details from callers.
 // This allows us to change the internal representation without breaking API

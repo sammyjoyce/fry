@@ -2,15 +2,15 @@
 
 #include <string.h>
 
-#include "../core/error.h"
-#include "../utils/logging.h"
-#include "../utils/memory.h"
-#include "tui_event.h"
-#include "tui_layout.h"
-#include "tui_mux.h"
-#include "tui_ncurses.h"
-#include "tui_pane.h"
-#include "tui_render.h"
+#include <core/error.h>
+#include <utils/logging.h>
+#include <utils/memory.h>
+#include "tui/tui_event.h"
+#include "tui/tui_layout.h"
+#include "tui/mux/tui_mux.h"
+#include "tui/backend/tui_ncurses.h"
+#include "tui/panes/tui_pane.h"
+#include "tui/tui_render.h"
 
 tui_t *tui_create(void) {
   tui_t *tui = app_calloc(1, sizeof(tui_t));

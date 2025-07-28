@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../core/config.h"
-#include "../utils/logging.h"
+#include "core/config.h"
+#include "utils/logging.h"
 #include "help.h"
 
 app_error app_parse_args(int argc, char *argv[], app_config_t *config) {

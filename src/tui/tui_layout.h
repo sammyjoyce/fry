@@ -3,9 +3,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "../core/error.h"
-#include "../core/types.h"
-#include "tui_pane.h"
+#include <core/error.h>
+#include <core/types.h>
+#include "panes/tui_pane.h"
 
 // Layout modes
 typedef enum {

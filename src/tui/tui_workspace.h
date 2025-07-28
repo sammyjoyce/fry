@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/error.h"
+#include <core/error.h>
 
 // Forward declarations
 typedef struct app_tui_mux app_tui_mux_t;
