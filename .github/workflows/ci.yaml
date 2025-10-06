@@ -369,7 +369,7 @@ jobs:
           path: artifacts
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2.0.4
+        uses: softprops/action-gh-release@v2.3.4
         with:
           files: artifacts/**/*
           generate_release_notes: true
